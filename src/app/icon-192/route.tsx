@@ -1,15 +1,14 @@
 import { ImageResponse } from "next/og";
 
-export const size = { width: 180, height: 180 };
-export const contentType = "image/png";
+export const runtime = "edge";
 
-export default function AppleIcon() {
+export function GET() {
   return new ImageResponse(
     (
       <div
         style={{
-          width: 180,
-          height: 180,
+          width: 192,
+          height: 192,
           background: "#f97316",
           display: "flex",
           flexDirection: "column",
@@ -18,11 +17,10 @@ export default function AppleIcon() {
           gap: 0,
         }}
       >
-        {/* Big M */}
         <div
           style={{
             color: "white",
-            fontSize: 96,
+            fontSize: 100,
             fontWeight: 900,
             fontFamily: "sans-serif",
             lineHeight: 1,
@@ -31,7 +29,6 @@ export default function AppleIcon() {
         >
           M
         </div>
-        {/* marathon text */}
         <div
           style={{
             color: "rgba(255,255,255,0.9)",
@@ -40,13 +37,13 @@ export default function AppleIcon() {
             fontFamily: "sans-serif",
             letterSpacing: 6,
             textTransform: "uppercase",
-            marginTop: -4,
+            marginTop: -6,
           }}
         >
           arathon
         </div>
       </div>
     ),
-    { ...size }
+    { width: 192, height: 192 }
   );
 }
