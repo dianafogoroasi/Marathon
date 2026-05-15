@@ -6,7 +6,7 @@ const eventMeta: Record<string, { gradient: string; emoji: string; landmarks: st
     gradient: "from-blue-900 via-blue-700 to-orange-500",
     emoji: "🌋",
     landmarks: "Vesuvio · Lungomare · Castel dell'Ovo",
-    raceDate: "25 Ottobre 2026",
+    raceDate: "18 Ottobre 2026",
   },
   "barcellona-2027-marathon": {
     gradient: "from-red-900 via-yellow-700 to-orange-400",
