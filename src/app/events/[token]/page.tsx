@@ -275,13 +275,7 @@ export default function EventPage() {
         {/* Instructions */}
         <div className="bg-gray-900 border border-orange-500/20 rounded-xl p-4 space-y-2">
           <p className="text-white font-semibold text-base">
-            <span className="text-orange-400">1.</span> Cercati in lista e clicca il pallino per aggiornare la tua risposta:{" "}
-            <span className="inline-flex w-5 h-5 rounded-full border-2 border-gray-600 items-center justify-center align-middle mx-0.5" title="In attesa" />{" "}
-            in attesa →{" "}
-            <span className="inline-flex w-5 h-5 rounded-full bg-orange-500 border-2 border-orange-500 items-center justify-center text-xs text-white align-middle mx-0.5">✓</span>{" "}
-            confermato →{" "}
-            <span className="inline-flex w-5 h-5 rounded-full bg-red-500 border-2 border-red-500 items-center justify-center text-xs text-white align-middle mx-0.5">✕</span>{" "}
-            non vengo
+            <span className="text-orange-400">1.</span> Cercati in lista e clicca il pallino accanto al tuo nome — <span className="text-orange-400">una volta</span> per confermare la tua presenza, <span className="text-red-400">due volte</span> per segnare che non vieni
           </p>
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">2.</span> Per tracciare pettorale, trasporto e albergo clicca su <span className="text-orange-400 font-bold">Modifica</span>
