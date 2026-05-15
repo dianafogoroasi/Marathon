@@ -10,7 +10,7 @@ const eventMeta: Record<string, { gradient: string; emoji: string; landmarks: st
   },
   "barcellona-2027-marathon": {
     gradient: "from-red-900 via-yellow-700 to-orange-400",
-    emoji: "🏛️",
+    emoji: "🎨",
     landmarks: "Sagrada Família · Barceloneta · Las Ramblas",
     raceDate: "14 Marzo 2027",
   },

@@ -54,13 +54,13 @@ const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }
   },
   "barcellona-2027-marathon": {
     gradient: "from-red-900 via-yellow-700 to-orange-400",
-    emoji: "⛪",
+    emoji: "🎨",
     deal: {
       foundOn: "15/05/2026",
       airline: "Ryanair",
       airlineLogo: "R",
-      outbound: { date: "Gio 13 Marzo 2027", from: "Venezia M.Polo", dep: "12:20", arr: "14:15", to: "Barcellona El Prat" },
-      inbound:  { date: "Sab 15 Marzo 2027", from: "Barcellona El Prat", dep: "13:00", arr: "14:55", to: "Venezia M.Polo" },
+      outbound: { date: "Sab 13 Marzo 2027", from: "Venezia M.Polo", dep: "12:20", arr: "14:15", to: "Barcellona El Prat" },
+      inbound:  { date: "Lun 15 Marzo 2027", from: "Barcellona El Prat", dep: "13:00", arr: "14:55", to: "Venezia M.Polo" },
       totalPrice: "€86.68",
       bookingUrl: "https://ryanair.com",
     },
