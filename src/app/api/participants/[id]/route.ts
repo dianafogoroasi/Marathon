@@ -12,6 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       email: body.email ?? null,
       phone: body.phone ?? null,
       confirmed: body.confirmed,
+      declined: body.declined,
       hasBib: body.hasBib,
       hasTransport: body.hasTransport,
       transportType: body.transportType ?? null,

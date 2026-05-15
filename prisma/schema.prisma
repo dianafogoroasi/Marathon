@@ -29,6 +29,7 @@ model Participant {
   email         String?
   phone         String?
   confirmed     Boolean @default(false)
+  declined      Boolean @default(false)
   hasBib        Boolean @default(false)
   hasTransport  Boolean @default(false)
   transportType String? // "volo" | "treno"

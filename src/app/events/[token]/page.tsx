@@ -10,6 +10,7 @@ type Participant = {
   email: string | null;
   phone: string | null;
   confirmed: boolean;
+  declined: boolean;
   hasBib: boolean;
   hasTransport: boolean;
   transportType: string | null;
@@ -159,7 +160,7 @@ export default function EventPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<{ open: boolean; participant: Participant | null }>({ open: false, participant: null });
-  const [toggling, setToggling] = useState<string | null>(null);
+  const [cycling, setCycling] = useState<string | null>(null);
 
   const isNapoli = token === "napoli-2026-marathon";
   const meta = eventMeta[token] ?? { gradient: "from-gray-800 to-gray-700", emoji: "🏃" };
@@ -172,15 +173,21 @@ export default function EventPage() {
 
   useEffect(() => { fetchEvent(); }, [token]);
 
-  async function toggleConfirmed(p: Participant) {
-    setToggling(p.id);
+  async function cycleStatus(p: Participant) {
+    // pending → confirmed → declined → pending
+    let next: { confirmed: boolean; declined: boolean };
+    if (!p.confirmed && !p.declined) next = { confirmed: true, declined: false };
+    else if (p.confirmed) next = { confirmed: false, declined: true };
+    else next = { confirmed: false, declined: false };
+
+    setCycling(p.id);
     await fetch(`/api/participants/${p.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...p, confirmed: !p.confirmed }),
+      body: JSON.stringify({ ...p, ...next }),
     });
     await fetchEvent();
-    setToggling(null);
+    setCycling(null);
   }
 
   async function handleSave(data: Partial<Participant>) {
@@ -228,6 +235,7 @@ export default function EventPage() {
   const stats = {
     candidati: event.participants.length,
     confermati: event.participants.filter((p) => p.confirmed).length,
+    declinati: event.participants.filter((p) => p.declined).length,
     bib: event.participants.filter((p) => p.hasBib).length,
     transport: event.participants.filter((p) => p.hasTransport).length,
     hotel: event.participants.filter((p) => p.hasHotel).length,
@@ -267,7 +275,13 @@ export default function EventPage() {
         {/* Instructions */}
         <div className="bg-gray-900 border border-orange-500/20 rounded-xl p-4 space-y-2">
           <p className="text-white font-semibold text-base">
-            <span className="text-orange-400">1.</span> Per confermare la tua presenza cercati in lista e clicca il <span className="inline-flex w-5 h-5 rounded-full border-2 border-orange-400 items-center justify-center text-xs align-middle mx-1">○</span> pallino
+            <span className="text-orange-400">1.</span> Cercati in lista e clicca il pallino per aggiornare la tua risposta:{" "}
+            <span className="inline-flex w-5 h-5 rounded-full border-2 border-gray-600 items-center justify-center align-middle mx-0.5" title="In attesa" />{" "}
+            in attesa →{" "}
+            <span className="inline-flex w-5 h-5 rounded-full bg-orange-500 border-2 border-orange-500 items-center justify-center text-xs text-white align-middle mx-0.5">✓</span>{" "}
+            confermato →{" "}
+            <span className="inline-flex w-5 h-5 rounded-full bg-red-500 border-2 border-red-500 items-center justify-center text-xs text-white align-middle mx-0.5">✕</span>{" "}
+            non vengo
           </p>
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">2.</span> Per tracciare pettorale, trasporto e albergo clicca su <span className="text-orange-400 font-bold">Modifica</span>
@@ -278,17 +292,17 @@ export default function EventPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {[
-            { label: "Candidati", value: stats.candidati, icon: "🏃", highlight: false },
-            { label: "Confermati", value: stats.confermati, icon: "✅", highlight: true },
-            { label: "Pettorale", value: stats.bib, icon: "🏅", highlight: false },
-            { label: "Trasporto", value: stats.transport, icon: "✈️", highlight: false },
-            { label: "Albergo", value: stats.hotel, icon: "🏨", highlight: false },
+            { label: "Candidati", value: stats.candidati, color: "text-white", bg: "bg-gray-900 border-white/10" },
+            { label: "Confermati", value: stats.confermati, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
+            { label: "Non vengono", value: stats.declinati, color: "text-red-400", bg: "bg-red-500/10 border-red-500/30" },
+            { label: "Pettorale", value: stats.bib, color: "text-white", bg: "bg-gray-900 border-white/10" },
+            { label: "Trasporto", value: stats.transport, color: "text-white", bg: "bg-gray-900 border-white/10" },
+            { label: "Albergo", value: stats.hotel, color: "text-white", bg: "bg-gray-900 border-white/10" },
           ].map((s) => (
-            <div key={s.label} className={`border rounded-xl p-3 text-center ${s.highlight ? "bg-orange-500/10 border-orange-500/30" : "bg-gray-900 border-white/10"}`}>
-              <div className="text-base">{s.icon}</div>
-              <div className={`text-2xl font-bold ${s.highlight ? "text-orange-400" : "text-white"}`}>{s.value}</div>
+            <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
+              <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
               <div className="text-gray-500 text-xs leading-tight">{s.label}</div>
             </div>
           ))}
@@ -308,26 +322,31 @@ export default function EventPage() {
           <div className="space-y-2">
             {event.participants.map((p, i) => (
               <div key={p.id}
-                className={`bg-gray-900 border rounded-xl px-4 py-3 transition-all ${p.confirmed ? "border-orange-500/30" : "border-white/10"}`}>
+                className={`bg-gray-900 border rounded-xl px-4 py-3 transition-all ${
+                  p.confirmed ? "border-orange-500/30" : p.declined ? "border-red-500/20" : "border-white/10"
+                }`}>
                 <div className="flex items-center gap-3">
                   <span className="text-gray-600 text-sm w-5 text-right shrink-0">{i + 1}</span>
 
-                  {/* Confirm toggle */}
+                  {/* Status cycle button: pending → confirmed → declined → pending */}
                   <button
-                    onClick={() => toggleConfirmed(p)}
-                    disabled={toggling === p.id}
+                    onClick={() => cycleStatus(p)}
+                    disabled={cycling === p.id}
                     className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
                       p.confirmed
                         ? "bg-orange-500 border-orange-500 text-white"
+                        : p.declined
+                        ? "bg-red-500 border-red-500 text-white"
                         : "border-gray-600 hover:border-orange-400"
-                    } ${toggling === p.id ? "opacity-50" : ""}`}
-                    title={p.confirmed ? "Confermato — clicca per annullare" : "Clicca per confermare"}
+                    } ${cycling === p.id ? "opacity-50" : ""}`}
+                    title={p.confirmed ? "Confermato — clicca per segnare Non vengo" : p.declined ? "Non viene — clicca per tornare In attesa" : "In attesa — clicca per confermare"}
                   >
-                    {p.confirmed && <span className="text-xs">✓</span>}
+                    {p.confirmed && <span className="text-xs leading-none">✓</span>}
+                    {p.declined && <span className="text-xs leading-none">✕</span>}
                   </button>
 
                   {/* Name */}
-                  <span className={`font-medium flex-1 ${p.confirmed ? "text-white" : "text-gray-400"}`}>
+                  <span className={`font-medium flex-1 ${p.confirmed ? "text-white" : p.declined ? "text-red-400 line-through" : "text-gray-400"}`}>
                     {p.name}
                   </span>
 
