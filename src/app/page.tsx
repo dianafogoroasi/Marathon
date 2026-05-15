@@ -53,7 +53,7 @@ export default function Home() {
 
       <div className="max-w-5xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-2 gap-6">
         {events.map((event) => (
-          <Link key={event.token} href={`/events/${event.token}`} className="group block">
+          <Link key={event.token} href={`/events/${event.token}`} className="group block select-none">
             <div className="relative rounded-2xl overflow-hidden border border-white/10 hover:border-orange-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/20">
               <div className={`h-52 bg-gradient-to-br ${event.gradient} relative`}>
                 <div className="absolute inset-0 bg-black/30" />
