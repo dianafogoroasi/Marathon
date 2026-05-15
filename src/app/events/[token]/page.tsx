@@ -264,6 +264,16 @@ export default function EventPage() {
           </div>
         )}
 
+        {/* Instructions */}
+        <div className="bg-gray-900 border border-orange-500/20 rounded-xl p-4 space-y-2">
+          <p className="text-white font-semibold text-base">
+            <span className="text-orange-400">1.</span> Per confermare la tua presenza cercati in lista e clicca il <span className="inline-flex w-5 h-5 rounded-full border-2 border-orange-400 items-center justify-center text-xs align-middle mx-1">○</span> pallino
+          </p>
+          <p className="text-white font-semibold text-base">
+            <span className="text-orange-400">2.</span> Per tracciare pettorale, trasporto e albergo clicca su <span className="text-orange-400 font-bold">Modifica</span>
+          </p>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-5 gap-2">
           {[
@@ -288,7 +298,7 @@ export default function EventPage() {
             <button
               onClick={() => setModal({ open: true, participant: null })}
               className="bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-              + Aggiungi
+              + Aggiungi candidato
             </button>
           </div>
 
@@ -330,8 +340,8 @@ export default function EventPage() {
                   {/* Edit button */}
                   <button
                     onClick={() => setModal({ open: true, participant: p })}
-                    className="text-gray-600 hover:text-orange-400 text-xs transition-colors shrink-0 ml-1">
-                    ✎
+                    className="text-orange-400 hover:text-orange-300 text-xs border border-orange-500/30 hover:border-orange-400 px-2 py-1 rounded-lg transition-colors shrink-0 ml-1 whitespace-nowrap">
+                    Modifica
                   </button>
                 </div>
 
