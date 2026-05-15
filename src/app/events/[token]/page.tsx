@@ -28,9 +28,43 @@ type Event = {
   participants: Participant[];
 };
 
-const eventMeta: Record<string, { gradient: string; emoji: string }> = {
-  "napoli-2026-marathon": { gradient: "from-blue-900 via-blue-700 to-orange-500", emoji: "🌋" },
-  "barcellona-2027-marathon": { gradient: "from-red-900 via-yellow-700 to-orange-400", emoji: "🏛️" },
+type Deal = {
+  foundOn: string;
+  airline: string;
+  airlineLogo: string;
+  outbound: { date: string; from: string; dep: string; arr: string; to: string };
+  inbound: { date: string; from: string; dep: string; arr: string; to: string };
+  totalPrice: string;
+  bookingUrl: string;
+};
+
+const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }> = {
+  "napoli-2026-marathon": {
+    gradient: "from-blue-900 via-blue-700 to-orange-500",
+    emoji: "🌋",
+    deal: {
+      foundOn: "15/05/2026",
+      airline: "Wizz Air",
+      airlineLogo: "W",
+      outbound: { date: "Sab 17 Ottobre 2026", from: "Venezia VCE", dep: "15:05", arr: "16:25", to: "Napoli NAP" },
+      inbound:  { date: "Lun 19 Ottobre 2026", from: "Napoli NAP",  dep: "17:00", arr: "18:20", to: "Venezia VCE" },
+      totalPrice: "~€55",
+      bookingUrl: "https://wizzair.com",
+    },
+  },
+  "barcellona-2027-marathon": {
+    gradient: "from-red-900 via-yellow-700 to-orange-400",
+    emoji: "⛪",
+    deal: {
+      foundOn: "15/05/2026",
+      airline: "Ryanair",
+      airlineLogo: "R",
+      outbound: { date: "Gio 13 Marzo 2027", from: "Venezia M.Polo", dep: "12:20", arr: "14:15", to: "Barcellona El Prat" },
+      inbound:  { date: "Sab 15 Marzo 2027", from: "Barcellona El Prat", dep: "13:00", arr: "14:55", to: "Venezia M.Polo" },
+      totalPrice: "€86.68",
+      bookingUrl: "https://ryanair.com",
+    },
+  },
 };
 
 function ParticipantModal({
@@ -272,13 +306,60 @@ export default function EventPage() {
           </div>
         )}
 
+        {/* Flight deal */}
+        {meta.deal && (
+          <div className="rounded-2xl overflow-hidden border border-yellow-400/40 shadow-lg shadow-yellow-400/10">
+            <div className="bg-yellow-400/10 px-5 py-3 flex items-center justify-between border-b border-yellow-400/20">
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400 text-lg">✈️</span>
+                <span className="text-yellow-400 font-bold text-sm tracking-wide uppercase">Super Offerta trovata il {meta.deal.foundOn}</span>
+              </div>
+              <span className="text-yellow-400/60 text-xs font-medium">{meta.deal.airline}</span>
+            </div>
+            <div className="bg-gray-900 p-5 space-y-4">
+              {/* Outbound */}
+              {[meta.deal.outbound, meta.deal.inbound].map((leg, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-gray-500 text-xs w-4">{i === 0 ? "→" : "←"}</span>
+                  <div className="flex-1">
+                    <p className="text-white/50 text-xs mb-1">{leg.date}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="text-center">
+                        <p className="text-white font-bold text-2xl leading-none">{leg.dep}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">{leg.from}</p>
+                      </div>
+                      <div className="flex-1 border-t border-dashed border-gray-600 mx-2" />
+                      <div className="text-center">
+                        <p className="text-white font-bold text-2xl leading-none">{leg.arr}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">{leg.to}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {/* Price + CTA */}
+              <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                <div>
+                  <p className="text-gray-400 text-xs">Totale andata e ritorno</p>
+                  <p className="text-yellow-400 font-bold text-4xl leading-none mt-1">{meta.deal.totalPrice}</p>
+                  <p className="text-gray-500 text-xs mt-1">a persona · solo volo</p>
+                </div>
+                <a href={meta.deal.bookingUrl} target="_blank" rel="noopener noreferrer"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold text-sm px-5 py-3 rounded-xl transition-colors">
+                  Prenota ora →
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Instructions */}
         <div className="bg-gray-900 border border-orange-500/20 rounded-xl p-4 space-y-2">
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">1.</span> Cercati in lista e clicca il pallino accanto al tuo nome — <span className="text-orange-400">una volta</span> per confermare la tua presenza, <span className="text-red-400">due volte</span> per segnare che non vieni
           </p>
           <p className="text-white font-semibold text-base">
-            <span className="text-orange-400">2.</span> Per tracciare pettorale, trasporto e albergo clicca su <span className="text-orange-400 font-bold">Modifica</span>
+            <span className="text-orange-400">2.</span> Per tracciare pettorale, trasporto e albergo clicca su <span className="text-orange-400 font-bold">Modifica</span> accanto al tuo nome
           </p>
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">3.</span> Se non ti trovi in lista clicca su <span className="text-orange-400 font-bold">+ Aggiungi candidato</span>
