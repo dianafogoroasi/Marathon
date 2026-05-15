@@ -7,96 +7,33 @@ datasource db {
 }
 
 model Event {
-  id                    String         @id @default(cuid())
-  name                  String
-  location              String
-  raceDate              DateTime
-  registrationDeadline  DateTime?
-  description           String?
-  privateToken          String         @unique @default(uuid())
-  createdAt             DateTime       @default(now())
+  id                   String        @id @default(cuid())
+  name                 String
+  location             String
+  raceDate             DateTime
+  registrationDeadline DateTime?
+  description          String?
+  officialUrl          String?
+  privateToken         String        @unique @default(uuid())
+  createdAt            DateTime      @default(now())
 
-  participants          Participant[]
-  flightOptions         FlightOption[]
-  hotelOptions          HotelOption[]
+  participants         Participant[]
 }
 
 model Participant {
-  id                    String              @id @default(cuid())
-  eventId               String
-  event                 Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id            String  @id @default(cuid())
+  eventId       String
+  event         Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  name                  String
-  email                 String
-  phone                 String?
-  departureCity         String?
-  preferredOutboundDate DateTime?
-  preferredReturnDate   DateTime?
-  roomType              RoomType            @default(NO_PREFERENCE)
-  roommatePreference    String?
-  notes                 String?
-  status                ParticipantStatus   @default(PENDING)
-  createdAt             DateTime            @default(now())
+  name          String
+  email         String?
+  phone         String?
+  hasBib        Boolean @default(false)
+  hasTransport  Boolean @default(false)
+  transportType String? // "volo" | "treno"
+  hasHotel      Boolean @default(false)
+  notes         String?
 
-  flightAssignment      ParticipantFlight?
-  hotelAssignment       ParticipantHotel?
-}
-
-model FlightOption {
-  id                String              @id @default(cuid())
-  eventId           String
-  event             Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  airline           String
-  route             String
-  departureDatetime DateTime
-  returnDatetime    DateTime
-  price             Float?
-  notes             String?
-
-  participants      ParticipantFlight[]
-}
-
-model HotelOption {
-  id                  String             @id @default(cuid())
-  eventId             String
-  event               Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  name                String
-  address             String?
-  stars               Int?
-  pricePerNight       Float?
-  roomTypesAvailable  String?
-  notes               String?
-
-  participants        ParticipantHotel[]
-}
-
-model ParticipantFlight {
-  participantId    String        @id
-  participant      Participant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
-  flightOptionId   String
-  flightOption     FlightOption  @relation(fields: [flightOptionId], references: [id], onDelete: Cascade)
-}
-
-model ParticipantHotel {
-  participantId    String        @id
-  participant      Participant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
-  hotelOptionId    String
-  hotelOption      HotelOption   @relation(fields: [hotelOptionId], references: [id], onDelete: Cascade)
-  roomType         RoomType      @default(NO_PREFERENCE)
-  checkIn          DateTime?
-  checkOut         DateTime?
-}
-
-enum RoomType {
-  SINGLE
-  DOUBLE
-  NO_PREFERENCE
-}
-
-enum ParticipantStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
