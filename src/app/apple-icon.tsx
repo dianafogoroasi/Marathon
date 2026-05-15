@@ -10,52 +10,26 @@ export default function AppleIcon() {
         style={{
           width: 180,
           height: 180,
-          borderRadius: 40,
-          background: "#111827",
+          background: "#f97316",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
+          gap: 4,
         }}
       >
-        {/* Orange circle */}
+        <div style={{ fontSize: 52, lineHeight: 1 }}>🏃</div>
         <div
           style={{
-            width: 130,
-            height: 130,
-            borderRadius: "50%",
-            background: "#f97316",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
             color: "white",
-            fontFamily: "sans-serif",
-          }}
-        >
-          {/* Running figure (simplified) */}
-          <div style={{ fontSize: 64, lineHeight: 1 }}>🏃</div>
-        </div>
-        {/* O badge bottom right */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 10,
-            right: 10,
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            background: "#111827",
-            border: "3px solid #f97316",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#f97316",
-            fontSize: 18,
+            fontSize: 26,
             fontWeight: 900,
             fontFamily: "sans-serif",
+            letterSpacing: 2,
+            textTransform: "uppercase",
           }}
         >
-          O
+          marathon
         </div>
       </div>
     ),
