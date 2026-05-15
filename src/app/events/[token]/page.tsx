@@ -272,6 +272,9 @@ export default function EventPage() {
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">2.</span> Per tracciare pettorale, trasporto e albergo clicca su <span className="text-orange-400 font-bold">Modifica</span>
           </p>
+          <p className="text-white font-semibold text-base">
+            <span className="text-orange-400">3.</span> Se non ti trovi in lista clicca su <span className="text-orange-400 font-bold">+ Aggiungi candidato</span>
+          </p>
         </div>
 
         {/* Stats */}
