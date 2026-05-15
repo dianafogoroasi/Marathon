@@ -165,7 +165,7 @@ export default function EventPage() {
   const meta = eventMeta[token] ?? { gradient: "from-gray-800 to-gray-700", emoji: "🏃" };
 
   async function fetchEvent() {
-    const res = await fetch(`/api/events/${token}/participants`);
+    const res = await fetch(`/api/events/${token}/participants`, { cache: "no-store" });
     if (res.ok) setEvent(await res.json());
     setLoading(false);
   }
