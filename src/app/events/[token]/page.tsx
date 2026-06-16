@@ -689,6 +689,12 @@ export default function EventPage() {
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">1.</span> <span className="text-orange-400">Conferma la tua presenza</span> — clicca il pallino accanto al tuo nome: <span className="text-orange-400">una volta</span> per confermare ✓, <span className="text-red-400">due volte</span> per segnare che non vieni ✕
           </p>
+          <p className="text-gray-400 text-sm pl-4 space-y-0.5">
+            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-green-500 shrink-0" /> <span>= confermato + tutte le info inserite</span></span>
+            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0" /> <span>= confermato ma mancano info viaggio</span></span>
+            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full border-2 border-gray-600 shrink-0" /> <span>= non ancora confermato</span></span>
+            <span className="inline-flex items-center gap-1.5"><span className="inline-block w-4 h-4 rounded-full bg-red-500 shrink-0" /> <span>= non viene</span></span>
+          </p>
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">2.</span> <span className="text-orange-400">Inserisci i tuoi dettagli</span> — clicca i pulsanti colorati sotto il tuo nome per indicare a che gara ti sei iscritto, se hai già il pettorale, come ti sposti e dove dormi. Diventano <span className="text-green-400">verdi ✓</span> man mano che compili
           </p>
