@@ -13,6 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       phone: body.phone ?? null,
       confirmed: body.confirmed,
       declined: body.declined,
+      coupleLabel: body.coupleLabel ?? null,
       raceType: body.raceType ?? null,
       departureDate: body.departureDate ?? null,
       returnDate: body.returnDate ?? null,

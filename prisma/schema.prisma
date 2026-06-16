@@ -30,6 +30,7 @@ model Participant {
   phone         String?
   confirmed     Boolean @default(false)
   declined      Boolean @default(false)
+  coupleLabel   String?
 
   raceType      String? // "maratona" | "mezza" | "supporto"
 

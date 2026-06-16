@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 type Participant = {
   id: string;
@@ -11,6 +13,7 @@ type Participant = {
   phone: string | null;
   confirmed: boolean;
   declined: boolean;
+  coupleLabel: string | null;
   raceType: string | null;
   departureDate: string | null;
   returnDate: string | null;
@@ -37,12 +40,74 @@ type Event = {
 type Deal = {
   foundOn: string;
   airline: string;
-  airlineLogo: string;
   outbound: { date: string; from: string; dep: string; arr: string; to: string };
-  inbound: { date: string; from: string; dep: string; arr: string; to: string };
+  inbound:  { date: string; from: string; dep: string; arr: string; to: string };
   totalPrice: string;
   bookingUrl: string;
 };
+
+type ModalSection = "race" | "travel";
+
+type ParticipantGroup = {
+  coupleLabel: string | null;
+  members: Participant[];
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function isComplete(p: Participant): boolean {
+  return p.raceType != null && p.hasTransport && p.hasHotel;
+}
+
+function raceLabel(r: string) {
+  return r === "maratona" ? "Maratona" : r === "mezza" ? "Mezza" : "Supporto";
+}
+
+function fmt(d: string | null | undefined) {
+  if (!d) return "?";
+  return new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
+}
+
+function groupAndSort(participants: Participant[]): ParticipantGroup[] {
+  const map = new Map<string, Participant[]>();
+  const singles: Participant[] = [];
+  for (const p of participants) {
+    if (p.coupleLabel) {
+      const arr = map.get(p.coupleLabel) ?? [];
+      arr.push(p);
+      map.set(p.coupleLabel, arr);
+    } else {
+      singles.push(p);
+    }
+  }
+  const groups: ParticipantGroup[] = [
+    ...Array.from(map.entries()).map(([label, members]) => ({ coupleLabel: label, members })),
+    ...singles.map(p => ({ coupleLabel: null, members: [p] })),
+  ];
+  const status = (g: ParticipantGroup) => {
+    if (g.members.every(p => p.declined)) return 2;
+    if (g.members.some(p => p.confirmed && !p.declined)) return 0;
+    return 1;
+  };
+  return groups.sort((a, b) => status(a) - status(b));
+}
+
+function getGroupTravel(members: Participant[]) {
+  const wt = members.find(m => m.hasTransport);
+  const wh = members.find(m => m.hasHotel);
+  const wd = members.find(m => m.departureDate);
+  return {
+    departureDate: wd?.departureDate ?? null,
+    returnDate: wd?.returnDate ?? null,
+    hasTransport: members.some(m => m.hasTransport),
+    transportType: wt?.transportType ?? null,
+    transportName: wt?.transportName ?? null,
+    hasHotel: members.some(m => m.hasHotel),
+    hotelName: wh?.hotelName ?? null,
+  };
+}
+
+// ── Event meta & deals ─────────────────────────────────────────────────────
 
 const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }> = {
   "napoli-2026-marathon": {
@@ -51,7 +116,6 @@ const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }
     deal: {
       foundOn: "16/06/2026",
       airline: "Wizz Air",
-      airlineLogo: "W",
       outbound: { date: "Sab 17 Ottobre 2026", from: "Venezia VCE", dep: "15:05", arr: "16:25", to: "Napoli NAP" },
       inbound:  { date: "Lun 19 Ottobre 2026", from: "Napoli NAP",  dep: "17:00", arr: "18:20", to: "Venezia VCE" },
       totalPrice: "€43",
@@ -64,7 +128,6 @@ const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }
     deal: {
       foundOn: "15/05/2026",
       airline: "Ryanair",
-      airlineLogo: "R",
       outbound: { date: "Sab 13 Marzo 2027", from: "Venezia M.Polo", dep: "12:20", arr: "14:15", to: "Barcellona El Prat" },
       inbound:  { date: "Lun 15 Marzo 2027", from: "Barcellona El Prat", dep: "13:00", arr: "14:55", to: "Venezia M.Polo" },
       totalPrice: "€86.68",
@@ -73,15 +136,151 @@ const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }
   },
 };
 
+// ── MemberRow ──────────────────────────────────────────────────────────────
+
+function MemberRow({
+  p, cycling, onCycle, onOpenModal,
+}: {
+  p: Participant;
+  cycling: string | null;
+  onCycle: (p: Participant) => void;
+  onOpenModal: (p: Participant, section: ModalSection) => void;
+}) {
+  const complete = isComplete(p);
+  const circleClass = p.confirmed && complete
+    ? "bg-green-500 border-green-500 text-white"
+    : p.confirmed
+    ? "bg-orange-500 border-orange-500 text-white"
+    : p.declined
+    ? "bg-red-500 border-red-500 text-white"
+    : "border-gray-600 hover:border-orange-400";
+
+  const nameClass = p.confirmed && complete
+    ? "text-green-300"
+    : p.confirmed
+    ? "text-white"
+    : p.declined
+    ? "text-red-400 line-through"
+    : "text-gray-400";
+
+  return (
+    <div className="flex items-start gap-3">
+      <button
+        onClick={() => onCycle(p)}
+        disabled={cycling === p.id}
+        title={p.confirmed ? (complete ? "Tutto completo!" : "Confermato") : p.declined ? "Non viene" : "In attesa"}
+        className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center mt-0.5 transition-all ${circleClass} ${cycling === p.id ? "opacity-50" : ""}`}
+      >
+        {p.confirmed && <span className="text-xs leading-none">✓</span>}
+        {p.declined && <span className="text-xs leading-none">✕</span>}
+      </button>
+
+      <div className="flex-1 min-w-0">
+        <span className={`font-medium text-sm ${nameClass}`}>{p.name}</span>
+
+        {p.confirmed && !p.declined && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {/* Race + bib chip */}
+            <button
+              onClick={() => onOpenModal(p, "race")}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                p.raceType
+                  ? (p.hasBib || p.raceType === "supporto")
+                    ? "bg-green-500/10 border-green-500/25 text-green-400 hover:border-green-400"
+                    : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
+                  : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
+              }`}
+            >
+              {p.raceType
+                ? `🏅 ${raceLabel(p.raceType)}${p.raceType !== "supporto" ? (p.hasBib ? " · pettorale ✓" : " · pettorale da prendere") : ""}`
+                : "⚠️ gara da inserire"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── GroupCard ──────────────────────────────────────────────────────────────
+
+function GroupCard({
+  group, cycling, onCycle, onOpenModal,
+}: {
+  group: ParticipantGroup;
+  cycling: string | null;
+  onCycle: (p: Participant) => void;
+  onOpenModal: (p: Participant, section: ModalSection, partnerId?: string) => void;
+}) {
+  const hasConfirmed = group.members.some(p => p.confirmed && !p.declined);
+  const travel = getGroupTravel(group.members);
+  const primary = group.members.find(p => p.confirmed && !p.declined) ?? group.members[0];
+  const partnerId = group.members.length > 1 ? group.members.find(p => p.id !== primary.id)?.id : undefined;
+
+  const transportChip = travel.hasTransport
+    ? { text: `✈️ ${travel.transportName ?? (travel.transportType === "treno" ? "Treno" : "Volo")}`, done: true }
+    : { text: "⚠️ trasporto da inserire", done: false };
+
+  const hotelChip = travel.hasHotel
+    ? { text: `🏨 ${travel.hotelName ?? "Albergo"}`, done: true }
+    : { text: "⚠️ albergo da inserire", done: false };
+
+  return (
+    <div className={`bg-gray-900 border rounded-2xl overflow-hidden ${hasConfirmed ? "border-white/10" : "border-white/5"}`}>
+      {/* Couple label + dates */}
+      {group.coupleLabel && (
+        <div className="px-4 pt-3 pb-1 flex items-center gap-2 flex-wrap">
+          <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider">{group.coupleLabel}</span>
+          {travel.departureDate && (
+            <span className="text-gray-600 text-xs">· 📅 {fmt(travel.departureDate)} → {fmt(travel.returnDate)}</span>
+          )}
+        </div>
+      )}
+
+      {/* Member rows */}
+      <div className={`px-4 ${group.coupleLabel ? "pt-1 pb-3" : "py-3"} space-y-3`}>
+        {group.members.map(p => (
+          <MemberRow key={p.id} p={p} cycling={cycling} onCycle={onCycle} onOpenModal={onOpenModal} />
+        ))}
+      </div>
+
+      {/* Shared travel chips — only for groups with at least one confirmed */}
+      {hasConfirmed && (
+        <div className="px-4 pb-3 pt-2 border-t border-white/5 flex flex-wrap gap-2">
+          <button
+            onClick={() => onOpenModal(primary, "travel", partnerId)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              transportChip.done
+                ? "bg-blue-500/10 border-blue-500/25 text-blue-300 hover:border-blue-400"
+                : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
+            }`}
+          >
+            {transportChip.text}
+          </button>
+          <button
+            onClick={() => onOpenModal(primary, "travel", partnerId)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              hotelChip.done
+                ? "bg-purple-500/10 border-purple-500/25 text-purple-300 hover:border-purple-400"
+                : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
+            }`}
+          >
+            {hotelChip.text}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ParticipantModal ───────────────────────────────────────────────────────
+
 function ParticipantModal({
-  participant,
-  isNapoli,
-  onSave,
-  onClose,
-  onDelete,
+  participant, isNapoli, focusSection, onSave, onClose, onDelete,
 }: {
   participant: Participant | null;
   isNapoli: boolean;
+  focusSection?: ModalSection;
   onSave: (data: Partial<Participant>) => void;
   onClose: () => void;
   onDelete?: () => void;
@@ -89,38 +288,47 @@ function ParticipantModal({
   const [form, setForm] = useState<Partial<Participant>>(
     participant ?? { name: "", confirmed: false, declined: false, hasBib: false, hasTransport: false, hasHotel: false }
   );
-  const set = (field: keyof Participant, value: unknown) =>
-    setForm((f) => ({ ...f, [field]: value }));
+  const set = (field: keyof Participant, value: unknown) => setForm(f => ({ ...f, [field]: value }));
+
+  const raceRef = useRef<HTMLDivElement>(null);
+  const travelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (focusSection === "race") raceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (focusSection === "travel") travelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [focusSection]);
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="p-6 border-b border-white/10">
-          <h2 className="text-xl font-bold text-white">
-            {participant ? "Modifica" : "Aggiungi candidato"}
-          </h2>
+      <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="p-6 border-b border-white/10 shrink-0">
+          <h2 className="text-xl font-bold text-white">{participant ? "Modifica" : "Aggiungi candidato"}</h2>
         </div>
-        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+
+        <div className="p-6 space-y-5 overflow-y-auto">
           {/* Nome */}
           <div>
             <label className="text-gray-400 text-sm block mb-1">Nome *</label>
             <input
               className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500"
               value={form.name ?? ""}
-              onChange={(e) => set("name", e.target.value)}
+              onChange={e => set("name", e.target.value)}
               placeholder="Nome e cognome"
             />
           </div>
 
           {/* Gara */}
-          <div>
-            <label className="text-gray-400 text-sm block mb-1">🏃 Partecipo come</label>
+          <div ref={raceRef}>
+            <label className="text-gray-400 text-sm block mb-2">🏃 Partecipo come</label>
             <div className="grid grid-cols-3 gap-2">
               {[
                 { value: "maratona", label: "Maratona" },
-                { value: "mezza", label: "Mezza" },
+                { value: "mezza",    label: "Mezza" },
                 { value: "supporto", label: "Solo supporto" },
-              ].map((opt) => (
+              ].map(opt => (
                 <button key={opt.value} type="button"
                   onClick={() => set("raceType", form.raceType === opt.value ? null : opt.value)}
                   className={`px-2 py-2 rounded-lg text-sm border transition-colors ${
@@ -132,99 +340,101 @@ function ParticipantModal({
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Date viaggio */}
-          <div>
-            <label className="text-gray-400 text-sm block mb-2">📅 Date del viaggio</label>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-gray-500 text-xs mb-1">Partenza</p>
-                <input type="date"
-                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
-                  value={form.departureDate ?? (isNapoli ? "2026-10-17" : "2027-03-13")}
-                  onChange={(e) => set("departureDate", e.target.value)}
-                />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-1">Ritorno</p>
-                <input type="date"
-                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
-                  value={form.returnDate ?? (isNapoli ? "2026-10-19" : "2027-03-15")}
-                  onChange={(e) => set("returnDate", e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Trasporto */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-3 cursor-pointer">
+            {/* Pettorale */}
+            <label className="flex items-center gap-3 cursor-pointer mt-3">
               <input type="checkbox" className="w-4 h-4 accent-orange-500"
-                checked={form.hasTransport ?? false} onChange={(e) => set("hasTransport", e.target.checked)} />
-              <span className="text-white text-sm">✈️ Ho prenotato il trasporto</span>
-            </label>
-            {form.hasTransport && (
-              <div className="ml-7 space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: "volo", label: "✈️ Volo" },
-                    { value: "treno", label: "🚄 Treno" },
-                  ].map((opt) => (
-                    <button key={opt.value} type="button"
-                      onClick={() => set("transportType", opt.value)}
-                      className={`py-1.5 rounded-lg text-sm border transition-colors ${
-                        form.transportType === opt.value
-                          ? "bg-orange-500 border-orange-500 text-white font-semibold"
-                          : "bg-gray-800 border-white/10 text-gray-300 hover:border-orange-400"
-                      }`}>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
-                  placeholder="Compagnia (es. Wizz Air, Italo, Freccia Rossa…)"
-                  value={form.transportName ?? ""}
-                  onChange={(e) => set("transportName", e.target.value)}
-                />
+                checked={form.hasBib ?? false} onChange={e => set("hasBib", e.target.checked)} />
+              <div>
+                <span className="text-white text-sm">🏅 Ho preso il pettorale</span>
+                <p className="text-gray-500 text-xs">Mi sono iscritto/a alla gara ufficiale</p>
               </div>
-            )}
+            </label>
           </div>
 
-          {/* Pettorale */}
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 accent-orange-500"
-              checked={form.hasBib ?? false} onChange={(e) => set("hasBib", e.target.checked)} />
+          {/* Viaggio */}
+          <div ref={travelRef} className="space-y-4 pt-1 border-t border-white/5">
+            <p className="text-gray-400 text-sm font-medium pt-2">Viaggio</p>
+
+            {/* Date */}
             <div>
-              <span className="text-white text-sm">🏅 Ho preso il pettorale</span>
-              <p className="text-gray-500 text-xs">Mi sono iscritto/a alla gara ufficiale</p>
-            </div>
-          </label>
-
-          {/* Albergo */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 accent-orange-500"
-                checked={form.hasHotel ?? false} onChange={(e) => set("hasHotel", e.target.checked)} />
-              <span className="text-white text-sm">🏨 Ho prenotato l&apos;albergo</span>
-            </label>
-            {form.hasHotel && (
-              <div className="ml-7 space-y-2">
-                <input
-                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
-                  placeholder="Nome albergo"
-                  value={form.hotelName ?? ""}
-                  onChange={(e) => set("hotelName", e.target.value)}
-                />
-                <input
-                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
-                  placeholder="Indirizzo"
-                  value={form.hotelAddress ?? ""}
-                  onChange={(e) => set("hotelAddress", e.target.value)}
-                />
+              <label className="text-gray-400 text-sm block mb-2">📅 Date del viaggio</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-gray-500 text-xs mb-1">Partenza</p>
+                  <input type="date"
+                    className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
+                    value={form.departureDate ?? (isNapoli ? "2026-10-17" : "2027-03-13")}
+                    onChange={e => set("departureDate", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs mb-1">Ritorno</p>
+                  <input type="date"
+                    className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
+                    value={form.returnDate ?? (isNapoli ? "2026-10-19" : "2027-03-15")}
+                    onChange={e => set("returnDate", e.target.value)}
+                  />
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* Trasporto */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 accent-orange-500"
+                  checked={form.hasTransport ?? false} onChange={e => set("hasTransport", e.target.checked)} />
+                <span className="text-white text-sm">✈️ Ho prenotato il trasporto</span>
+              </label>
+              {form.hasTransport && (
+                <div className="ml-7 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {[{ value: "volo", label: "✈️ Volo" }, { value: "treno", label: "🚄 Treno" }].map(opt => (
+                      <button key={opt.value} type="button"
+                        onClick={() => set("transportType", opt.value)}
+                        className={`py-1.5 rounded-lg text-sm border transition-colors ${
+                          form.transportType === opt.value
+                            ? "bg-orange-500 border-orange-500 text-white font-semibold"
+                            : "bg-gray-800 border-white/10 text-gray-300 hover:border-orange-400"
+                        }`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
+                    placeholder="Compagnia (es. Wizz Air, Italo…)"
+                    value={form.transportName ?? ""}
+                    onChange={e => set("transportName", e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Albergo */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 accent-orange-500"
+                  checked={form.hasHotel ?? false} onChange={e => set("hasHotel", e.target.checked)} />
+                <span className="text-white text-sm">🏨 Ho prenotato l&apos;albergo</span>
+              </label>
+              {form.hasHotel && (
+                <div className="ml-7 space-y-2">
+                  <input
+                    className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
+                    placeholder="Nome albergo"
+                    value={form.hotelName ?? ""}
+                    onChange={e => set("hotelName", e.target.value)}
+                  />
+                  <input
+                    className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
+                    placeholder="Indirizzo"
+                    value={form.hotelAddress ?? ""}
+                    onChange={e => set("hotelAddress", e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Note */}
@@ -233,12 +443,13 @@ function ParticipantModal({
             <textarea
               className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 resize-none"
               value={form.notes ?? ""}
-              onChange={(e) => set("notes", e.target.value)}
+              onChange={e => set("notes", e.target.value)}
               rows={2}
             />
           </div>
         </div>
-        <div className="p-6 border-t border-white/10 flex gap-3 justify-between">
+
+        <div className="p-6 border-t border-white/10 flex gap-3 justify-between shrink-0">
           <div>
             {onDelete && (
               <button onClick={onDelete}
@@ -264,11 +475,18 @@ function ParticipantModal({
   );
 }
 
+// ── EventPage ──────────────────────────────────────────────────────────────
+
 export default function EventPage() {
   const { token } = useParams<{ token: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<{ open: boolean; participant: Participant | null }>({ open: false, participant: null });
+  const [modal, setModal] = useState<{
+    open: boolean;
+    participant: Participant | null;
+    focusSection?: ModalSection;
+    partnerId?: string;
+  }>({ open: false, participant: null });
   const [cycling, setCycling] = useState<string | null>(null);
   const [dealOpen, setDealOpen] = useState(false);
 
@@ -284,12 +502,10 @@ export default function EventPage() {
   useEffect(() => { fetchEvent(); }, [token]);
 
   async function cycleStatus(p: Participant) {
-    // pending → confirmed → declined → pending
     let next: { confirmed: boolean; declined: boolean };
     if (!p.confirmed && !p.declined) next = { confirmed: true, declined: false };
     else if (p.confirmed) next = { confirmed: false, declined: true };
     else next = { confirmed: false, declined: false };
-
     setCycling(p.id);
     await fetch(`/api/participants/${p.id}`, {
       method: "PATCH",
@@ -307,6 +523,27 @@ export default function EventPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      // Sync travel fields to partner if in a couple
+      if (modal.partnerId) {
+        const partner = event?.participants.find(p => p.id === modal.partnerId);
+        if (partner) {
+          await fetch(`/api/participants/${modal.partnerId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...partner,
+              departureDate: data.departureDate,
+              returnDate: data.returnDate,
+              hasTransport: data.hasTransport,
+              transportType: data.transportType,
+              transportName: data.transportName,
+              hasHotel: data.hasHotel,
+              hotelName: data.hotelName,
+              hotelAddress: data.hotelAddress,
+            }),
+          });
+        }
+      }
     } else {
       await fetch(`/api/events/${token}/participants`, {
         method: "POST",
@@ -323,6 +560,10 @@ export default function EventPage() {
     await fetch(`/api/participants/${modal.participant.id}`, { method: "DELETE" });
     setModal({ open: false, participant: null });
     fetchEvent();
+  }
+
+  function openModal(p: Participant, section: ModalSection, partnerId?: string) {
+    setModal({ open: true, participant: p, focusSection: section, partnerId });
   }
 
   if (loading) return (
@@ -342,14 +583,14 @@ export default function EventPage() {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
-  const stats = {
-    candidati: event.participants.length,
-    confermati: event.participants.filter((p) => p.confirmed).length,
-    declinati: event.participants.filter((p) => p.declined).length,
-    bib: event.participants.filter((p) => p.hasBib).length,
-    transport: event.participants.filter((p) => p.hasTransport).length,
-    hotel: event.participants.filter((p) => p.hasHotel).length,
-  };
+  const total = event.participants.length;
+  const confirmed = event.participants.filter(p => p.confirmed && !p.declined).length;
+  const declined = event.participants.filter(p => p.declined).length;
+  const bib = event.participants.filter(p => p.hasBib).length;
+  const transport = event.participants.filter(p => p.hasTransport).length;
+  const hotel = event.participants.filter(p => p.hasHotel).length;
+
+  const groups = groupAndSort(event.participants);
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
@@ -372,6 +613,7 @@ export default function EventPage() {
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
+        {/* Description */}
         {event.officialUrl && (
           <div className="bg-gray-900 border border-white/10 rounded-xl p-4">
             <p className="text-gray-400 text-sm">{event.description}</p>
@@ -394,15 +636,15 @@ export default function EventPage() {
         {meta.deal && (
           <div className="rounded-2xl overflow-hidden border border-yellow-400/40 shadow-lg shadow-yellow-400/10">
             <button
-              onClick={() => setDealOpen((v) => !v)}
+              onClick={() => setDealOpen(v => !v)}
               className="w-full bg-yellow-400/10 px-5 py-3 flex items-center justify-between hover:bg-yellow-400/15 transition-colors">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="text-yellow-400 text-lg">✈️</span>
-                <span className="text-yellow-400 font-bold text-sm tracking-wide uppercase">
+                <span className="text-yellow-400 font-bold text-sm tracking-wide uppercase truncate">
                   Super Offerta {meta.deal.airline} — {meta.deal.totalPrice} a/r · trovata il {meta.deal.foundOn}
                 </span>
               </div>
-              <span className="text-yellow-400 text-sm ml-3">{dealOpen ? "▲" : "▼"}</span>
+              <span className="text-yellow-400 text-sm ml-3 shrink-0">{dealOpen ? "▲" : "▼"}</span>
             </button>
             {dealOpen && (
               <div className="bg-gray-900 p-5 space-y-4">
@@ -447,7 +689,7 @@ export default function EventPage() {
             <span className="text-orange-400">1.</span> Cercati in lista e clicca il pallino accanto al tuo nome — <span className="text-orange-400">una volta</span> per confermare la tua presenza, <span className="text-red-400">due volte</span> per segnare che non vieni
           </p>
           <p className="text-white font-semibold text-base">
-            <span className="text-orange-400">2.</span> Per tracciare pettorale, trasporto e albergo clicca su <span className="text-orange-400 font-bold">Modifica</span> accanto al tuo nome
+            <span className="text-orange-400">2.</span> Clicca sui chip colorati per inserire gara, trasporto e albergo — diventano <span className="text-green-400">verdi</span> quando completati e il pallino diventa verde quando hai finito tutto
           </p>
           <p className="text-white font-semibold text-base">
             <span className="text-orange-400">3.</span> Se non ti trovi in lista clicca su <span className="text-orange-400 font-bold">+ Aggiungi candidato</span>
@@ -457,13 +699,13 @@ export default function EventPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {[
-            { label: "Candidati", value: stats.candidati, color: "text-white", bg: "bg-gray-900 border-white/10" },
-            { label: "Confermati", value: stats.confermati, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
-            { label: "Non vengono", value: stats.declinati, color: "text-red-400", bg: "bg-red-500/10 border-red-500/30" },
-            { label: "Pettorale", value: stats.bib, color: "text-white", bg: "bg-gray-900 border-white/10" },
-            { label: "Trasporto", value: stats.transport, color: "text-white", bg: "bg-gray-900 border-white/10" },
-            { label: "Albergo", value: stats.hotel, color: "text-white", bg: "bg-gray-900 border-white/10" },
-          ].map((s) => (
+            { label: "Candidati",    value: total,     color: "text-white",    bg: "bg-gray-900 border-white/10" },
+            { label: "Confermati",   value: confirmed, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
+            { label: "Non vengono",  value: declined,  color: "text-red-400",  bg: "bg-red-500/10 border-red-500/30" },
+            { label: "Pettorale",    value: bib,       color: "text-white",    bg: "bg-gray-900 border-white/10" },
+            { label: "Trasporto",    value: transport, color: "text-white",    bg: "bg-gray-900 border-white/10" },
+            { label: "Albergo",      value: hotel,     color: "text-white",    bg: "bg-gray-900 border-white/10" },
+          ].map(s => (
             <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
               <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
               <div className="text-gray-500 text-xs leading-tight">{s.label}</div>
@@ -471,7 +713,7 @@ export default function EventPage() {
           ))}
         </div>
 
-        {/* List */}
+        {/* Grouped list */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold">Lista candidati</h2>
@@ -481,86 +723,15 @@ export default function EventPage() {
               + Aggiungi candidato
             </button>
           </div>
-
-          <div className="space-y-2">
-            {event.participants.map((p, i) => (
-              <div key={p.id}
-                className={`bg-gray-900 border rounded-xl px-4 py-3 transition-all ${
-                  p.confirmed ? "border-orange-500/30" : p.declined ? "border-red-500/20" : "border-white/10"
-                }`}>
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-600 text-sm w-5 text-right shrink-0">{i + 1}</span>
-
-                  {/* Status cycle button: pending → confirmed → declined → pending */}
-                  <button
-                    onClick={() => cycleStatus(p)}
-                    disabled={cycling === p.id}
-                    className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                      p.confirmed
-                        ? "bg-orange-500 border-orange-500 text-white"
-                        : p.declined
-                        ? "bg-red-500 border-red-500 text-white"
-                        : "border-gray-600 hover:border-orange-400"
-                    } ${cycling === p.id ? "opacity-50" : ""}`}
-                    title={p.confirmed ? "Confermato — clicca per segnare Non vengo" : p.declined ? "Non viene — clicca per tornare In attesa" : "In attesa — clicca per confermare"}
-                  >
-                    {p.confirmed && <span className="text-xs leading-none">✓</span>}
-                    {p.declined && <span className="text-xs leading-none">✕</span>}
-                  </button>
-
-                  {/* Name */}
-                  <span className={`font-medium flex-1 ${p.confirmed ? "text-white" : p.declined ? "text-red-400 line-through" : "text-gray-400"}`}>
-                    {p.name}
-                  </span>
-
-                  {/* Status badges */}
-                  <div className="hidden sm:flex gap-1.5">
-                    {p.hasBib && <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full">🏅</span>}
-                    {p.hasTransport && <span className="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full">
-                      {p.transportType === "treno" ? "🚄" : "✈️"}
-                    </span>}
-                    {p.hasHotel && <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">🏨</span>}
-                  </div>
-
-                  {/* Edit button */}
-                  <button
-                    onClick={() => setModal({ open: true, participant: p })}
-                    className="text-orange-400 hover:text-orange-300 text-xs border border-orange-500/30 hover:border-orange-400 px-2 py-1 rounded-lg transition-colors shrink-0 ml-1 whitespace-nowrap">
-                    Modifica
-                  </button>
-                </div>
-
-                {/* Detail chips */}
-                {(p.raceType || p.departureDate || p.returnDate || p.hasBib || p.hasTransport || p.hasHotel) && (
-                  <div className="mt-2 ml-14 flex flex-wrap gap-2">
-                    {/* Gara + pettorale accorpati */}
-                    {(p.raceType || p.hasBib) && (
-                      <span className="inline-flex items-center gap-1 bg-orange-500/10 border border-orange-500/25 text-orange-300 text-xs px-2.5 py-1 rounded-full">
-                        🏅 {p.raceType === "maratona" ? "Maratona" : p.raceType === "mezza" ? "Mezza" : p.raceType === "supporto" ? "Supporto" : "Gara"}
-                        {p.hasBib ? <span className="text-green-400 font-semibold ml-1">· pettorale ✓</span> : <span className="text-gray-500 ml-1">· pettorale non ancora</span>}
-                      </span>
-                    )}
-                    {/* Date */}
-                    {(p.departureDate || p.returnDate) && (
-                      <span className="inline-flex items-center gap-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs px-2.5 py-1 rounded-full">
-                        📅 {p.departureDate ? new Date(p.departureDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"} → {p.returnDate ? new Date(p.returnDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"}
-                      </span>
-                    )}
-                    {/* Trasporto */}
-                    {p.hasTransport && (
-                      <span className="inline-flex items-center gap-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs px-2.5 py-1 rounded-full">
-                        {p.transportType === "treno" ? "🚄" : "✈️"} {p.transportName ?? (p.transportType === "treno" ? "Treno" : "Volo")}
-                      </span>
-                    )}
-                    {/* Albergo */}
-                    {p.hasHotel && (
-                      <span className="inline-flex items-center gap-1 bg-purple-500/10 border border-purple-500/25 text-purple-300 text-xs px-2.5 py-1 rounded-full">
-                        🏨 {p.hotelName ?? "Albergo prenotato"}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
+          <div className="space-y-3">
+            {groups.map(group => (
+              <GroupCard
+                key={group.coupleLabel ?? group.members[0].id}
+                group={group}
+                cycling={cycling}
+                onCycle={cycleStatus}
+                onOpenModal={openModal}
+              />
             ))}
           </div>
         </div>
@@ -570,6 +741,7 @@ export default function EventPage() {
         <ParticipantModal
           participant={modal.participant}
           isNapoli={isNapoli}
+          focusSection={modal.focusSection}
           onSave={handleSave}
           onClose={() => setModal({ open: false, participant: null })}
           onDelete={modal.participant ? handleDelete : undefined}
