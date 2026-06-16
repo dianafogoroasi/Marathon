@@ -587,6 +587,7 @@ export default function EventPage() {
   const total = event.participants.length;
   const confirmed = event.participants.filter(p => p.confirmed && !p.declined).length;
   const declined = event.participants.filter(p => p.declined).length;
+  const support = event.participants.filter(p => p.raceType === "supporto").length;
   const bib = event.participants.filter(p => p.hasBib).length;
   const transport = event.participants.filter(p => p.hasTransport).length;
   const hotel = event.participants.filter(p => p.hasHotel).length;
@@ -703,21 +704,34 @@ export default function EventPage() {
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {[
-            { label: "Candidati",    value: total,     color: "text-white",    bg: "bg-gray-900 border-white/10" },
-            { label: "Confermati",   value: confirmed, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
-            { label: "Non vengono",  value: declined,  color: "text-red-400",  bg: "bg-red-500/10 border-red-500/30" },
-            { label: "Pettorale",    value: bib,       color: "text-white",    bg: "bg-gray-900 border-white/10" },
-            { label: "Trasporto",    value: transport, color: "text-white",    bg: "bg-gray-900 border-white/10" },
-            { label: "Albergo",      value: hotel,     color: "text-white",    bg: "bg-gray-900 border-white/10" },
-          ].map(s => (
-            <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
-              <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-              <div className="text-gray-500 text-xs leading-tight">{s.label}</div>
-            </div>
-          ))}
+        {/* Stats — row 1: partecipazione */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Candidati",   value: total,     color: "text-white",      bg: "bg-gray-900 border-white/10" },
+              { label: "Confermati",  value: confirmed, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
+              { label: "Non vengono", value: declined,  color: "text-red-400",    bg: "bg-red-500/10 border-red-500/30" },
+            ].map(s => (
+              <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
+                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-gray-500 text-xs leading-tight">{s.label}</div>
+              </div>
+            ))}
+          </div>
+          {/* Stats — row 2: logistica */}
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: "Supporto",  value: support,   color: "text-white", bg: "bg-gray-900 border-white/10" },
+              { label: "Pettorale", value: bib,       color: "text-white", bg: "bg-gray-900 border-white/10" },
+              { label: "Trasporto", value: transport, color: "text-white", bg: "bg-gray-900 border-white/10" },
+              { label: "Albergo",   value: hotel,     color: "text-white", bg: "bg-gray-900 border-white/10" },
+            ].map(s => (
+              <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
+                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-gray-500 text-xs leading-tight">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Grouped list */}
