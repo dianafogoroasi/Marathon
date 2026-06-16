@@ -30,10 +30,21 @@ model Participant {
   phone         String?
   confirmed     Boolean @default(false)
   declined      Boolean @default(false)
+
+  raceType      String? // "maratona" | "mezza" | "supporto"
+
+  departureDate String?
+  returnDate    String?
+
   hasBib        Boolean @default(false)
   hasTransport  Boolean @default(false)
   transportType String? // "volo" | "treno"
+  transportName String? // es. "Wizz Air", "Italo", "Freccia Rossa"
+
   hasHotel      Boolean @default(false)
+  hotelName     String?
+  hotelAddress  String?
+
   notes         String?
 
   createdAt     DateTime @default(now())

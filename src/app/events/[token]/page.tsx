@@ -11,10 +11,16 @@ type Participant = {
   phone: string | null;
   confirmed: boolean;
   declined: boolean;
+  raceType: string | null;
+  departureDate: string | null;
+  returnDate: string | null;
   hasBib: boolean;
   hasTransport: boolean;
   transportType: string | null;
+  transportName: string | null;
   hasHotel: boolean;
+  hotelName: string | null;
+  hotelAddress: string | null;
   notes: string | null;
 };
 
@@ -81,7 +87,7 @@ function ParticipantModal({
   onDelete?: () => void;
 }) {
   const [form, setForm] = useState<Partial<Participant>>(
-    participant ?? { name: "", confirmed: false, hasBib: false, hasTransport: false, hasHotel: false }
+    participant ?? { name: "", confirmed: false, declined: false, hasBib: false, hasTransport: false, hasHotel: false }
   );
   const set = (field: keyof Participant, value: unknown) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -94,7 +100,8 @@ function ParticipantModal({
             {participant ? "Modifica" : "Aggiungi candidato"}
           </h2>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+          {/* Nome */}
           <div>
             <label className="text-gray-400 text-sm block mb-1">Nome *</label>
             <input
@@ -104,55 +111,123 @@ function ParticipantModal({
               placeholder="Nome e cognome"
             />
           </div>
+
+          {/* Gara */}
           <div>
-            <label className="text-gray-400 text-sm block mb-1">Email (opzionale)</label>
-            <input
-              className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500"
-              value={form.email ?? ""}
-              onChange={(e) => set("email", e.target.value)}
-              type="email"
-            />
+            <label className="text-gray-400 text-sm block mb-1">🏃 Partecipo come</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: "maratona", label: "Maratona" },
+                { value: "mezza", label: "Mezza" },
+                { value: "supporto", label: "Solo supporto" },
+              ].map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => set("raceType", form.raceType === opt.value ? null : opt.value)}
+                  className={`px-2 py-2 rounded-lg text-sm border transition-colors ${
+                    form.raceType === opt.value
+                      ? "bg-orange-500 border-orange-500 text-white font-semibold"
+                      : "bg-gray-800 border-white/10 text-gray-300 hover:border-orange-400"
+                  }`}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="space-y-3">
-            <p className="text-gray-400 text-sm font-medium">Logistica</p>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 accent-orange-500"
-                checked={form.hasBib ?? false} onChange={(e) => set("hasBib", e.target.checked)} />
+
+          {/* Date viaggio */}
+          <div>
+            <label className="text-gray-400 text-sm block mb-2">📅 Date del viaggio</label>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <span className="text-white text-sm">🏅 Pettorale</span>
-                <p className="text-gray-500 text-xs">Mi sono iscritto/a alla gara</p>
+                <p className="text-gray-500 text-xs mb-1">Partenza</p>
+                <input type="date"
+                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
+                  value={form.departureDate ?? ""}
+                  onChange={(e) => set("departureDate", e.target.value)}
+                />
               </div>
-            </label>
+              <div>
+                <p className="text-gray-500 text-xs mb-1">Ritorno</p>
+                <input type="date"
+                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
+                  value={form.returnDate ?? ""}
+                  onChange={(e) => set("returnDate", e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Trasporto */}
+          <div className="space-y-2">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" className="w-4 h-4 accent-orange-500"
                 checked={form.hasTransport ?? false} onChange={(e) => set("hasTransport", e.target.checked)} />
-              <div>
-                <span className="text-white text-sm">✈️ Trasporto</span>
-                <p className="text-gray-500 text-xs">Ho prenotato {isNapoli ? "volo o treno" : "il volo"}</p>
-              </div>
+              <span className="text-white text-sm">✈️ Ho prenotato il trasporto</span>
             </label>
-            {form.hasTransport && isNapoli && (
-              <div className="ml-7">
-                <select
-                  className="bg-gray-800 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-orange-500"
-                  value={form.transportType ?? ""}
-                  onChange={(e) => set("transportType", e.target.value)}
-                >
-                  <option value="">Seleziona tipo</option>
-                  <option value="volo">✈️ Volo</option>
-                  <option value="treno">🚄 Treno</option>
-                </select>
+            {form.hasTransport && (
+              <div className="ml-7 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "volo", label: "✈️ Volo" },
+                    { value: "treno", label: "🚄 Treno" },
+                  ].map((opt) => (
+                    <button key={opt.value} type="button"
+                      onClick={() => set("transportType", opt.value)}
+                      className={`py-1.5 rounded-lg text-sm border transition-colors ${
+                        form.transportType === opt.value
+                          ? "bg-orange-500 border-orange-500 text-white font-semibold"
+                          : "bg-gray-800 border-white/10 text-gray-300 hover:border-orange-400"
+                      }`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
+                  placeholder="Compagnia (es. Wizz Air, Italo, Freccia Rossa…)"
+                  value={form.transportName ?? ""}
+                  onChange={(e) => set("transportName", e.target.value)}
+                />
               </div>
             )}
+          </div>
+
+          {/* Pettorale */}
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" className="w-4 h-4 accent-orange-500"
+              checked={form.hasBib ?? false} onChange={(e) => set("hasBib", e.target.checked)} />
+            <div>
+              <span className="text-white text-sm">🏅 Ho preso il pettorale</span>
+              <p className="text-gray-500 text-xs">Mi sono iscritto/a alla gara ufficiale</p>
+            </div>
+          </label>
+
+          {/* Albergo */}
+          <div className="space-y-2">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" className="w-4 h-4 accent-orange-500"
                 checked={form.hasHotel ?? false} onChange={(e) => set("hasHotel", e.target.checked)} />
-              <div>
-                <span className="text-white text-sm">🏨 Albergo</span>
-                <p className="text-gray-500 text-xs">Ho prenotato l&apos;albergo</p>
-              </div>
+              <span className="text-white text-sm">🏨 Ho prenotato l&apos;albergo</span>
             </label>
+            {form.hasHotel && (
+              <div className="ml-7 space-y-2">
+                <input
+                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
+                  placeholder="Nome albergo"
+                  value={form.hotelName ?? ""}
+                  onChange={(e) => set("hotelName", e.target.value)}
+                />
+                <input
+                  className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 text-sm"
+                  placeholder="Indirizzo"
+                  value={form.hotelAddress ?? ""}
+                  onChange={(e) => set("hotelAddress", e.target.value)}
+                />
+              </div>
+            )}
           </div>
+
+          {/* Note */}
           <div>
             <label className="text-gray-400 text-sm block mb-1">Note (opzionale)</label>
             <textarea
@@ -442,12 +517,31 @@ export default function EventPage() {
                   </button>
                 </div>
 
-                {/* Mobile badges */}
-                {(p.hasBib || p.hasTransport || p.hasHotel) && (
-                  <div className="flex sm:hidden gap-1.5 mt-2 ml-14">
-                    {p.hasBib && <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full">🏅 Pettorale</span>}
-                    {p.hasTransport && <span className="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full">{p.transportType === "treno" ? "🚄 Treno" : "✈️ Volo"}</span>}
-                    {p.hasHotel && <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">🏨 Albergo</span>}
+                {/* Detail rows */}
+                {(p.raceType || p.departureDate || p.returnDate || p.hasBib || p.hasTransport || p.hasHotel) && (
+                  <div className="mt-2 ml-14 space-y-1">
+                    {p.raceType && (
+                      <p className="text-xs text-gray-400">
+                        🏃 {p.raceType === "maratona" ? "Maratona" : p.raceType === "mezza" ? "Mezza maratona" : "Solo supporto morale"}
+                      </p>
+                    )}
+                    {(p.departureDate || p.returnDate) && (
+                      <p className="text-xs text-gray-400">
+                        📅 {p.departureDate ? new Date(p.departureDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"}{" "}→{" "}
+                        {p.returnDate ? new Date(p.returnDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"}
+                      </p>
+                    )}
+                    {p.hasTransport && (
+                      <p className="text-xs text-gray-400">
+                        {p.transportType === "treno" ? "🚄" : "✈️"} {p.transportName ?? (p.transportType === "treno" ? "Treno" : "Volo")}
+                      </p>
+                    )}
+                    {p.hasBib && <p className="text-xs text-gray-400">🏅 Pettorale preso</p>}
+                    {p.hasHotel && (
+                      <p className="text-xs text-gray-400">
+                        🏨 {p.hotelName ?? "Albergo prenotato"}{p.hotelAddress ? ` · ${p.hotelAddress}` : ""}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
