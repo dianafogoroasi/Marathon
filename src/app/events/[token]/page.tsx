@@ -142,7 +142,7 @@ function ParticipantModal({
                 <p className="text-gray-500 text-xs mb-1">Partenza</p>
                 <input type="date"
                   className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
-                  value={form.departureDate ?? ""}
+                  value={form.departureDate ?? (isNapoli ? "2026-10-17" : "2027-03-13")}
                   onChange={(e) => set("departureDate", e.target.value)}
                 />
               </div>
@@ -150,7 +150,7 @@ function ParticipantModal({
                 <p className="text-gray-500 text-xs mb-1">Ritorno</p>
                 <input type="date"
                   className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-sm"
-                  value={form.returnDate ?? ""}
+                  value={form.returnDate ?? (isNapoli ? "2026-10-19" : "2027-03-15")}
                   onChange={(e) => set("returnDate", e.target.value)}
                 />
               </div>
@@ -530,30 +530,33 @@ export default function EventPage() {
                   </button>
                 </div>
 
-                {/* Detail rows */}
+                {/* Detail chips */}
                 {(p.raceType || p.departureDate || p.returnDate || p.hasBib || p.hasTransport || p.hasHotel) && (
-                  <div className="mt-2 ml-14 space-y-1">
-                    {p.raceType && (
-                      <p className="text-xs text-gray-400">
-                        🏃 {p.raceType === "maratona" ? "Maratona" : p.raceType === "mezza" ? "Mezza maratona" : "Solo supporto morale"}
-                      </p>
+                  <div className="mt-2 ml-14 flex flex-wrap gap-2">
+                    {/* Gara + pettorale accorpati */}
+                    {(p.raceType || p.hasBib) && (
+                      <span className="inline-flex items-center gap-1 bg-orange-500/10 border border-orange-500/25 text-orange-300 text-xs px-2.5 py-1 rounded-full">
+                        🏅 {p.raceType === "maratona" ? "Maratona" : p.raceType === "mezza" ? "Mezza" : p.raceType === "supporto" ? "Supporto" : "Gara"}
+                        {p.hasBib ? <span className="text-green-400 font-semibold ml-1">· pettorale ✓</span> : <span className="text-gray-500 ml-1">· pettorale non ancora</span>}
+                      </span>
                     )}
+                    {/* Date */}
                     {(p.departureDate || p.returnDate) && (
-                      <p className="text-xs text-gray-400">
-                        📅 {p.departureDate ? new Date(p.departureDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"}{" "}→{" "}
-                        {p.returnDate ? new Date(p.returnDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"}
-                      </p>
+                      <span className="inline-flex items-center gap-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs px-2.5 py-1 rounded-full">
+                        📅 {p.departureDate ? new Date(p.departureDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"} → {p.returnDate ? new Date(p.returnDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "?"}
+                      </span>
                     )}
+                    {/* Trasporto */}
                     {p.hasTransport && (
-                      <p className="text-xs text-gray-400">
+                      <span className="inline-flex items-center gap-1 bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs px-2.5 py-1 rounded-full">
                         {p.transportType === "treno" ? "🚄" : "✈️"} {p.transportName ?? (p.transportType === "treno" ? "Treno" : "Volo")}
-                      </p>
+                      </span>
                     )}
-                    {p.hasBib && <p className="text-xs text-gray-400">🏅 Pettorale preso</p>}
+                    {/* Albergo */}
                     {p.hasHotel && (
-                      <p className="text-xs text-gray-400">
-                        🏨 {p.hotelName ?? "Albergo prenotato"}{p.hotelAddress ? ` · ${p.hotelAddress}` : ""}
-                      </p>
+                      <span className="inline-flex items-center gap-1 bg-purple-500/10 border border-purple-500/25 text-purple-300 text-xs px-2.5 py-1 rounded-full">
+                        🏨 {p.hotelName ?? "Albergo prenotato"}
+                      </span>
                     )}
                   </div>
                 )}
