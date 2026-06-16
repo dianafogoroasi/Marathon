@@ -591,6 +591,9 @@ export default function EventPage() {
   const bib = event.participants.filter(p => p.hasBib).length;
   const transport = event.participants.filter(p => p.hasTransport).length;
   const hotel = event.participants.filter(p => p.hasHotel).length;
+  const bibMissing = Math.max(0, confirmed - support - bib);
+  const transportMissing = Math.max(0, confirmed - transport);
+  const hotelMissing = Math.max(0, confirmed - hotel);
 
   const groups = groupAndSort(event.participants);
 
@@ -676,17 +679,32 @@ export default function EventPage() {
           </div>
           {/* Stats — row 2: logistica */}
           <div className="grid grid-cols-4 gap-2">
-            {[
-              { label: "Supporto",  value: support,   color: "text-white", bg: "bg-gray-900 border-white/10" },
-              { label: "Pettorale", value: bib,       color: "text-white", bg: "bg-gray-900 border-white/10" },
-              { label: "Trasporto", value: transport, color: "text-white", bg: "bg-gray-900 border-white/10" },
-              { label: "Albergo",   value: hotel,     color: "text-white", bg: "bg-gray-900 border-white/10" },
-            ].map(s => (
-              <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
-                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-                <div className="text-gray-500 text-xs leading-tight">{s.label}</div>
-              </div>
-            ))}
+            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
+              <div className="text-2xl font-bold text-white">{support}</div>
+              <div className="text-gray-500 text-xs leading-tight">Supporto</div>
+              <div className="text-gray-600 text-xs mt-0.5">non corrono</div>
+            </div>
+            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
+              <div className="text-2xl font-bold text-white">{bib}</div>
+              <div className="text-gray-500 text-xs leading-tight">Pettorale</div>
+              {bibMissing > 0
+                ? <div className="text-yellow-500 text-xs mt-0.5">mancano {bibMissing}</div>
+                : <div className="text-green-500 text-xs mt-0.5">completo ✓</div>}
+            </div>
+            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
+              <div className="text-2xl font-bold text-white">{transport}</div>
+              <div className="text-gray-500 text-xs leading-tight">Trasporto</div>
+              {transportMissing > 0
+                ? <div className="text-yellow-500 text-xs mt-0.5">mancano {transportMissing}</div>
+                : <div className="text-green-500 text-xs mt-0.5">completo ✓</div>}
+            </div>
+            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
+              <div className="text-2xl font-bold text-white">{hotel}</div>
+              <div className="text-gray-500 text-xs leading-tight">Albergo</div>
+              {hotelMissing > 0
+                ? <div className="text-yellow-500 text-xs mt-0.5">mancano {hotelMissing}</div>
+                : <div className="text-green-500 text-xs mt-0.5">completo ✓</div>}
+            </div>
           </div>
         </div>
 
