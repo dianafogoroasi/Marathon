@@ -736,14 +736,7 @@ export default function EventPage() {
 
         {/* Grouped list */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold">Lista candidati</h2>
-            <button
-              onClick={() => setModal({ open: true, participant: null })}
-              className="bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-              + Aggiungi candidato
-            </button>
-          </div>
+          <h2 className="text-lg font-bold mb-3">Lista candidati</h2>
           <div className="space-y-3">
             {groups.map(group => (
               <GroupCard
@@ -755,6 +748,11 @@ export default function EventPage() {
               />
             ))}
           </div>
+          <button
+            onClick={() => setModal({ open: true, participant: null })}
+            className="mt-6 w-full bg-orange-500 hover:bg-orange-400 text-white font-semibold px-4 py-3 rounded-xl transition-colors">
+            + Aggiungi candidato
+          </button>
         </div>
       </div>
 
@@ -765,7 +763,6 @@ export default function EventPage() {
           focusSection={modal.focusSection}
           onSave={handleSave}
           onClose={() => setModal({ open: false, participant: null })}
-          onDelete={modal.participant ? handleDelete : undefined}
         />
       )}
     </main>
