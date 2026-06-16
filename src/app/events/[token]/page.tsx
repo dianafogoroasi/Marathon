@@ -684,15 +684,15 @@ export default function EventPage() {
         )}
 
         {/* Instructions */}
-        <div className="bg-gray-900 border border-orange-500/20 rounded-xl p-4 space-y-2">
+        <div className="bg-gray-900 border border-orange-500/20 rounded-xl p-4 space-y-3">
           <p className="text-white font-semibold text-base">
-            <span className="text-orange-400">1.</span> Cercati in lista e clicca il pallino accanto al tuo nome — <span className="text-orange-400">una volta</span> per confermare la tua presenza, <span className="text-red-400">due volte</span> per segnare che non vieni
+            <span className="text-orange-400">1.</span> <span className="text-orange-400">Conferma la tua presenza</span> — clicca il pallino accanto al tuo nome: <span className="text-orange-400">una volta</span> per confermare ✓, <span className="text-red-400">due volte</span> per segnare che non vieni ✕
           </p>
           <p className="text-white font-semibold text-base">
-            <span className="text-orange-400">2.</span> Clicca sui chip colorati per inserire gara, trasporto e albergo — diventano <span className="text-green-400">verdi</span> quando completati e il pallino diventa verde quando hai finito tutto
+            <span className="text-orange-400">2.</span> <span className="text-orange-400">Inserisci i tuoi dettagli</span> — clicca i pulsanti colorati sotto il tuo nome per indicare a che gara ti sei iscritto, se hai già il pettorale, come ti sposti e dove dormi. Diventano <span className="text-green-400">verdi ✓</span> man mano che compili
           </p>
           <p className="text-white font-semibold text-base">
-            <span className="text-orange-400">3.</span> Se non ti trovi in lista clicca su <span className="text-orange-400 font-bold">+ Aggiungi candidato</span>
+            <span className="text-orange-400">3.</span> <span className="text-orange-400">Non ti trovi in lista?</span> — clicca <span className="text-orange-400 font-bold">+ Aggiungi candidato</span> in fondo alla pagina
           </p>
         </div>
 
