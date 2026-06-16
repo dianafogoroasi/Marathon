@@ -270,6 +270,7 @@ export default function EventPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<{ open: boolean; participant: Participant | null }>({ open: false, participant: null });
   const [cycling, setCycling] = useState<string | null>(null);
+  const [dealOpen, setDealOpen] = useState(false);
 
   const isNapoli = token === "napoli-2026-marathon";
   const meta = eventMeta[token] ?? { gradient: "from-gray-800 to-gray-700", emoji: "🏃" };
@@ -372,59 +373,71 @@ export default function EventPage() {
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
         {event.officialUrl && (
-          <div className="bg-gray-900 border border-white/10 rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-gray-900 border border-white/10 rounded-xl p-4">
             <p className="text-gray-400 text-sm">{event.description}</p>
-            <a href={event.officialUrl} target="_blank" rel="noopener noreferrer"
-              className="text-orange-400 text-sm hover:underline whitespace-nowrap ml-4">
-              Sito ufficiale →
-            </a>
+            <div className="flex items-center gap-4 mt-3">
+              {isNapoli && (
+                <a href="https://maps.google.com/?q=Piazza+del+Plebiscito,+Napoli" target="_blank" rel="noopener noreferrer"
+                  className="text-blue-400 text-sm hover:underline">
+                  📍 Apri su Maps
+                </a>
+              )}
+              <a href={event.officialUrl} target="_blank" rel="noopener noreferrer"
+                className="text-orange-400 text-sm hover:underline">
+                Sito ufficiale →
+              </a>
+            </div>
           </div>
         )}
 
-        {/* Flight deal */}
+        {/* Flight deal — collapsible */}
         {meta.deal && (
           <div className="rounded-2xl overflow-hidden border border-yellow-400/40 shadow-lg shadow-yellow-400/10">
-            <div className="bg-yellow-400/10 px-5 py-3 flex items-center justify-between border-b border-yellow-400/20">
+            <button
+              onClick={() => setDealOpen((v) => !v)}
+              className="w-full bg-yellow-400/10 px-5 py-3 flex items-center justify-between hover:bg-yellow-400/15 transition-colors">
               <div className="flex items-center gap-2">
                 <span className="text-yellow-400 text-lg">✈️</span>
-                <span className="text-yellow-400 font-bold text-sm tracking-wide uppercase">Super Offerta trovata il {meta.deal.foundOn}</span>
+                <span className="text-yellow-400 font-bold text-sm tracking-wide uppercase">
+                  Super Offerta {meta.deal.airline} — {meta.deal.totalPrice} a/r · trovata il {meta.deal.foundOn}
+                </span>
               </div>
-              <span className="text-yellow-400/60 text-xs font-medium">{meta.deal.airline}</span>
-            </div>
-            <div className="bg-gray-900 p-5 space-y-4">
-              {/* Outbound */}
-              {[meta.deal.outbound, meta.deal.inbound].map((leg, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-gray-500 text-xs w-4">{i === 0 ? "→" : "←"}</span>
-                  <div className="flex-1">
-                    <p className="text-white/50 text-xs mb-1">{leg.date}</p>
-                    <div className="flex items-center gap-2">
-                      <div className="text-center">
-                        <p className="text-white font-bold text-2xl leading-none">{leg.dep}</p>
-                        <p className="text-gray-400 text-xs mt-0.5">{leg.from}</p>
-                      </div>
-                      <div className="flex-1 border-t border-dashed border-gray-600 mx-2" />
-                      <div className="text-center">
-                        <p className="text-white font-bold text-2xl leading-none">{leg.arr}</p>
-                        <p className="text-gray-400 text-xs mt-0.5">{leg.to}</p>
+              <span className="text-yellow-400 text-sm ml-3">{dealOpen ? "▲" : "▼"}</span>
+            </button>
+            {dealOpen && (
+              <div className="bg-gray-900 p-5 space-y-4">
+                {[meta.deal.outbound, meta.deal.inbound].map((leg, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-gray-500 text-xs w-4">{i === 0 ? "→" : "←"}</span>
+                    <div className="flex-1">
+                      <p className="text-white/50 text-xs mb-1">{leg.date}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="text-center">
+                          <p className="text-white font-bold text-2xl leading-none">{leg.dep}</p>
+                          <p className="text-gray-400 text-xs mt-0.5">{leg.from}</p>
+                        </div>
+                        <div className="flex-1 border-t border-dashed border-gray-600 mx-2" />
+                        <div className="text-center">
+                          <p className="text-white font-bold text-2xl leading-none">{leg.arr}</p>
+                          <p className="text-gray-400 text-xs mt-0.5">{leg.to}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))}
+                <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                  <div>
+                    <p className="text-gray-400 text-xs">Totale andata e ritorno</p>
+                    <p className="text-yellow-400 font-bold text-4xl leading-none mt-1">{meta.deal.totalPrice}</p>
+                    <p className="text-gray-500 text-xs mt-1">a persona · solo volo</p>
+                  </div>
+                  <a href={meta.deal.bookingUrl} target="_blank" rel="noopener noreferrer"
+                    className="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold text-sm px-5 py-3 rounded-xl transition-colors">
+                    Prenota ora →
+                  </a>
                 </div>
-              ))}
-              {/* Price + CTA */}
-              <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                <div>
-                  <p className="text-gray-400 text-xs">Totale andata e ritorno</p>
-                  <p className="text-yellow-400 font-bold text-4xl leading-none mt-1">{meta.deal.totalPrice}</p>
-                  <p className="text-gray-500 text-xs mt-1">a persona · solo volo</p>
-                </div>
-                <a href={meta.deal.bookingUrl} target="_blank" rel="noopener noreferrer"
-                  className="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold text-sm px-5 py-3 rounded-xl transition-colors">
-                  Prenota ora →
-                </a>
               </div>
-            </div>
+            )}
           </div>
         )}
 
