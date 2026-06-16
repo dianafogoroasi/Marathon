@@ -587,10 +587,11 @@ export default function EventPage() {
   const total = event.participants.length;
   const confirmed = event.participants.filter(p => p.confirmed && !p.declined).length;
   const declined = event.participants.filter(p => p.declined).length;
-  const support = event.participants.filter(p => p.raceType === "supporto").length;
-  const bib = event.participants.filter(p => p.hasBib).length;
-  const transport = event.participants.filter(p => p.hasTransport).length;
-  const hotel = event.participants.filter(p => p.hasHotel).length;
+  const confirmedList = event.participants.filter(p => p.confirmed && !p.declined);
+  const support = confirmedList.filter(p => p.raceType === "supporto").length;
+  const bib = confirmedList.filter(p => p.hasBib).length;
+  const transport = confirmedList.filter(p => p.hasTransport).length;
+  const hotel = confirmedList.filter(p => p.hasHotel).length;
   const bibMissing = Math.max(0, confirmed - support - bib);
   const transportMissing = Math.max(0, confirmed - transport);
   const hotelMissing = Math.max(0, confirmed - hotel);
