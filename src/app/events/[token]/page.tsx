@@ -217,13 +217,14 @@ function GroupCard({
   const primary = group.members.find(p => p.confirmed && !p.declined) ?? group.members[0];
   const partnerId = group.members.length > 1 ? group.members.find(p => p.id !== primary.id)?.id : undefined;
 
-  const transportChip = travel.hasTransport
-    ? { text: `✈️ ${travel.transportName ?? (travel.transportType === "treno" ? "Treno" : "Volo")}`, done: true }
-    : { text: "⚠️ trasporto da inserire", done: false };
+  const transportIcon = travel.transportType === "treno" ? "🚄" : "✈️";
+  const transportChip = travel.hasTransport && travel.transportName
+    ? { text: `${transportIcon} ${travel.transportName}`, done: true }
+    : { text: travel.hasTransport ? `${transportIcon} trasporto - nome da inserire` : "✈️ Volo/treno da inserire", done: false };
 
-  const hotelChip = travel.hasHotel
-    ? { text: `🏨 ${travel.hotelName ?? "Albergo"}`, done: true }
-    : { text: "⚠️ albergo da inserire", done: false };
+  const hotelChip = travel.hasHotel && travel.hotelName
+    ? { text: `🏨 ${travel.hotelName}`, done: true }
+    : { text: "🏨 Albergo - da inserire", done: false };
 
   return (
     <div className={`bg-gray-900 border rounded-2xl overflow-hidden ${hasConfirmed ? "border-white/10" : "border-white/5"}`}>
