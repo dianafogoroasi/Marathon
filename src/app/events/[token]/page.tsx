@@ -113,14 +113,6 @@ const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }
   "napoli-2026-marathon": {
     gradient: "from-blue-950 via-slate-800 to-slate-900",
     emoji: "🌋",
-    deal: {
-      foundOn: "16/06/2026",
-      airline: "Wizz Air",
-      outbound: { date: "Sab 17 Ottobre 2026", from: "Venezia VCE", dep: "15:05", arr: "16:25", to: "Napoli NAP" },
-      inbound:  { date: "Lun 19 Ottobre 2026", from: "Napoli NAP",  dep: "17:00", arr: "18:20", to: "Venezia VCE" },
-      totalPrice: "€43",
-      bookingUrl: "https://wizzair.com",
-    },
   },
   "barcellona-2027-marathon": {
     gradient: "from-red-950 via-zinc-800 to-slate-900",
@@ -147,33 +139,19 @@ function MemberRow({
   onOpenModal: (p: Participant, section: ModalSection) => void;
 }) {
   const complete = isComplete(p);
-  const circleClass = p.confirmed && complete
+  const circleClass = complete
     ? "bg-green-500 border-green-500 text-white"
-    : p.confirmed
-    ? "bg-orange-500 border-orange-500 text-white"
-    : p.declined
-    ? "bg-red-500 border-red-500 text-white"
-    : "border-gray-600 hover:border-white/40";
-
-  const nameClass = p.confirmed && complete
-    ? "text-green-300"
-    : p.confirmed
-    ? "text-white"
-    : p.declined
-    ? "text-red-400 line-through"
-    : "text-gray-400";
+    : "bg-orange-500 border-orange-500 text-white";
+  const nameClass = complete ? "text-green-300" : "text-white";
 
   return (
     <div className="flex items-start gap-3">
-      <button
-        onClick={() => onCycle(p)}
-        disabled={cycling === p.id}
-        title={p.confirmed ? (complete ? "Tutto completo!" : "Confermato") : p.declined ? "Non viene" : "In attesa"}
-        className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center mt-0.5 transition-all ${circleClass} ${cycling === p.id ? "opacity-50" : ""}`}
+      <div
+        title={complete ? "Tutto completo!" : "Mancano alcune info"}
+        className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center mt-0.5 ${circleClass}`}
       >
-        {p.confirmed && <span className="text-xs leading-none">✓</span>}
-        {p.declined && <span className="text-xs leading-none">✕</span>}
-      </button>
+        <span className="text-xs leading-none">✓</span>
+      </div>
 
       <div className="flex-1 min-w-0">
         <span className={`font-medium text-sm ${nameClass}`}>{p.name}</span>
@@ -596,7 +574,8 @@ export default function EventPage() {
   const transportMissing = Math.max(0, confirmed - transport);
   const hotelMissing = Math.max(0, confirmed - hotel);
 
-  const groups = groupAndSort(event.participants);
+  const confirmedOnly = event.participants.filter(p => p.confirmed && !p.declined);
+  const groups = groupAndSort(confirmedOnly);
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
@@ -650,10 +629,8 @@ export default function EventPage() {
             <span className="text-white/40">1.</span> <span className="text-white">Conferma la tua presenza</span> — clicca il pallino accanto al tuo nome: <span className="text-white/70">una volta</span> per confermare ✓, <span className="text-red-400/80">due volte</span> per segnare che non vieni ✕
           </p>
           <p className="text-white/40 text-sm pl-4 space-y-0.5">
-            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-green-500 shrink-0" /> <span>= confermato + tutte le info inserite</span></span>
-            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0" /> <span>= confermato ma mancano info viaggio</span></span>
-            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full border-2 border-gray-600 shrink-0" /> <span>= non ancora confermato</span></span>
-            <span className="inline-flex items-center gap-1.5"><span className="inline-block w-4 h-4 rounded-full bg-red-500 shrink-0" /> <span>= non viene</span></span>
+            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-green-500 shrink-0" /> <span>= tutte le info inserite</span></span>
+            <span className="inline-flex items-center gap-1.5"><span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0" /> <span>= mancano ancora alcune info</span></span>
           </p>
           <p className="text-white/80 text-base">
             <span className="text-white/40">2.</span> <span className="text-white">Inserisci i tuoi dettagli</span> — clicca i pulsanti colorati sotto il tuo nome per indicare a che gara ti sei iscritto, se hai già il pettorale, come ti sposti e dove dormi. Diventano <span className="text-green-400">verdi ✓</span> man mano che compili
@@ -715,7 +692,7 @@ export default function EventPage() {
 
         {/* Grouped list */}
         <div>
-          <h2 className="text-lg font-bold mb-3">Lista candidati</h2>
+          <h2 className="text-2xl font-black tracking-tight mb-4">Lista partecipanti</h2>
           <div className="space-y-3">
             {groups.map(group => (
               <GroupCard
@@ -727,11 +704,6 @@ export default function EventPage() {
               />
             ))}
           </div>
-          <button
-            onClick={() => setModal({ open: true, participant: null })}
-            className="mt-6 w-full bg-white/8 hover:bg-white/12 text-white/60 hover:text-white font-semibold px-4 py-3 rounded-xl border border-white/10 hover:border-white/20 transition-all">
-            + Aggiungi candidato
-          </button>
         </div>
 
         {/* Flight deal — in fondo alla pagina */}
