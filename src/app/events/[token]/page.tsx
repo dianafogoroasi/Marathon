@@ -154,7 +154,7 @@ function MemberRow({
       </div>
 
       <div className="flex-1 min-w-0">
-        <span className={`font-medium text-sm ${nameClass}`}>{p.name}</span>
+        <span className={`font-semibold text-base ${nameClass}`}>{p.name}</span>
 
         {p.confirmed && !p.declined && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -602,20 +602,20 @@ export default function EventPage() {
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
-        {/* Description — prominent */}
+        {/* Description */}
         {event.description && (
-          <div className="bg-gray-900 border border-white/20 rounded-2xl p-5">
-            <p className="text-white text-base leading-relaxed">{event.description}</p>
-            <div className="flex items-center gap-5 mt-4 pt-4 border-t border-white/10">
+          <div className="border-l-2 border-white/10 pl-5">
+            <p className="text-white/70 text-lg leading-relaxed">{event.description}</p>
+            <div className="flex items-center gap-5 mt-4">
               {isNapoli && (
                 <a href="https://maps.google.com/?q=Piazza+del+Plebiscito,+Napoli" target="_blank" rel="noopener noreferrer"
-                  className="text-blue-400 hover:underline font-medium">
-                  📍 Apri su Maps
+                  className="text-white/40 hover:text-white text-sm transition-colors">
+                  📍 Maps
                 </a>
               )}
               {event.officialUrl && (
                 <a href={event.officialUrl} target="_blank" rel="noopener noreferrer"
-                  className="text-orange-400 hover:underline font-medium">
+                  className="text-white/40 hover:text-white text-sm transition-colors">
                   Sito ufficiale →
                 </a>
               )}
@@ -623,70 +623,53 @@ export default function EventPage() {
           </div>
         )}
 
-        {/* Instructions */}
-        <div className="bg-gray-900 border border-white/8 rounded-xl p-4 space-y-3">
-          <p className="text-white/80 text-base">
-            <span className="text-white/40">1.</span> <span className="text-white">Conferma la tua presenza</span> — clicca il pallino accanto al tuo nome: <span className="text-white/70">una volta</span> per confermare ✓, <span className="text-red-400/80">due volte</span> per segnare che non vieni ✕
+        {/* Instructions — minimal */}
+        <div className="space-y-2 border-t border-white/6 pt-5">
+          <p className="text-white/50 text-sm leading-relaxed">
+            Clicca sui chip colorati sotto il tuo nome per inserire o aggiornare i dettagli del viaggio.
           </p>
-          <p className="text-white/40 text-sm pl-4 space-y-0.5">
-            <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-green-500 shrink-0" /> <span>= tutte le info inserite</span></span>
-            <span className="inline-flex items-center gap-1.5"><span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0" /> <span>= mancano ancora alcune info</span></span>
+          <p className="text-white/30 text-xs flex items-center gap-4">
+            <span className="inline-flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-green-500" /> tutte le info inserite</span>
+            <span className="inline-flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-orange-500" /> mancano alcune info</span>
           </p>
-          <p className="text-white/80 text-base">
-            <span className="text-white/40">2.</span> <span className="text-white">Inserisci i tuoi dettagli</span> — clicca i pulsanti colorati sotto il tuo nome per indicare a che gara ti sei iscritto, se hai già il pettorale, come ti sposti e dove dormi. Diventano <span className="text-green-400">verdi ✓</span> man mano che compili
-          </p>
-          <p className="text-white/80 text-base">
-            <span className="text-white/40">3.</span> <span className="text-white">Non ti trovi in lista?</span> — clicca <span className="text-white font-semibold">+ Aggiungi candidato</span> in fondo alla pagina
-          </p>
-          {meta.deal && (
-            <p className="text-white/80 text-base">
-              <span className="text-white/40">4.</span> <span className="text-white">Offerta volo</span> — verifica in fondo alla pagina la migliore offerta trovata da Diana 🙂
-            </p>
-          )}
         </div>
 
-        {/* Stats — row 1: partecipazione */}
-        <div className="space-y-2">
-          <div className="grid grid-cols-3 gap-2">
+        {/* Stats */}
+        <div className="border-t border-white/6 pt-5 space-y-4">
+          <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Candidati",   value: total,     color: "text-white",      bg: "bg-gray-900 border-white/10" },
-              { label: "Confermati",  value: confirmed, color: "text-white",      bg: "bg-white/5 border-white/10" },
-              { label: "Non vengono", value: declined,  color: "text-red-400",    bg: "bg-red-500/10 border-red-500/30" },
+              { label: "Presenti",    value: confirmed },
+              { label: "Trasporto",   value: transport, missing: transportMissing },
+              { label: "Albergo",     value: hotel,     missing: hotelMissing },
             ].map(s => (
-              <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
-                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-                <div className="text-gray-500 text-xs leading-tight">{s.label}</div>
+              <div key={s.label} className="text-center">
+                <div className="text-4xl font-black text-white leading-none">{s.value}</div>
+                <div className="text-white/30 text-xs tracking-wider uppercase mt-1.5">{s.label}</div>
+                {"missing" in s && s.missing != null && (
+                  <div className={`text-xs mt-1 ${s.missing > 0 ? "text-amber-400/70" : "text-green-500/70"}`}>
+                    {s.missing > 0 ? `mancano ${s.missing}` : "completo ✓"}
+                  </div>
+                )}
               </div>
             ))}
           </div>
-          {/* Stats — row 2: logistica */}
-          <div className="grid grid-cols-4 gap-2">
-            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
-              <div className="text-2xl font-bold text-white">{support}</div>
-              <div className="text-gray-500 text-xs leading-tight">Supporto</div>
-              <div className="text-gray-600 text-xs mt-0.5">non corrono</div>
-            </div>
-            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
-              <div className="text-2xl font-bold text-white">{bib}</div>
-              <div className="text-gray-500 text-xs leading-tight">Pettorale</div>
-              {bibMissing > 0
-                ? <div className="text-yellow-500 text-xs mt-0.5">mancano {bibMissing}</div>
-                : <div className="text-green-500 text-xs mt-0.5">completo ✓</div>}
-            </div>
-            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
-              <div className="text-2xl font-bold text-white">{transport}</div>
-              <div className="text-gray-500 text-xs leading-tight">Trasporto</div>
-              {transportMissing > 0
-                ? <div className="text-yellow-500 text-xs mt-0.5">mancano {transportMissing}</div>
-                : <div className="text-green-500 text-xs mt-0.5">completo ✓</div>}
-            </div>
-            <div className="border rounded-xl p-3 text-center bg-gray-900 border-white/10">
-              <div className="text-2xl font-bold text-white">{hotel}</div>
-              <div className="text-gray-500 text-xs leading-tight">Albergo</div>
-              {hotelMissing > 0
-                ? <div className="text-yellow-500 text-xs mt-0.5">mancano {hotelMissing}</div>
-                : <div className="text-green-500 text-xs mt-0.5">completo ✓</div>}
-            </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: "Supporto",   value: support, sub: "non corrono" },
+              { label: "Pettorale",  value: bib,     missing: bibMissing },
+            ].map(s => (
+              <div key={s.label} className="text-center">
+                <div className="text-4xl font-black text-white leading-none">{s.value}</div>
+                <div className="text-white/30 text-xs tracking-wider uppercase mt-1.5">{s.label}</div>
+                {"missing" in s && s.missing != null ? (
+                  <div className={`text-xs mt-1 ${s.missing > 0 ? "text-amber-400/70" : "text-green-500/70"}`}>
+                    {s.missing > 0 ? `mancano ${s.missing}` : "completo ✓"}
+                  </div>
+                ) : (
+                  <div className="text-white/20 text-xs mt-1">{"sub" in s ? s.sub : ""}</div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
