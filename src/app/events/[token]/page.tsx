@@ -111,7 +111,7 @@ function getGroupTravel(members: Participant[]) {
 
 const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }> = {
   "napoli-2026-marathon": {
-    gradient: "from-blue-900 via-blue-700 to-orange-500",
+    gradient: "from-blue-950 via-slate-800 to-slate-900",
     emoji: "🌋",
     deal: {
       foundOn: "16/06/2026",
@@ -123,7 +123,7 @@ const eventMeta: Record<string, { gradient: string; emoji: string; deal?: Deal }
     },
   },
   "barcellona-2027-marathon": {
-    gradient: "from-red-900 via-yellow-700 to-orange-400",
+    gradient: "from-red-950 via-zinc-800 to-slate-900",
     emoji: "🎨",
     deal: {
       foundOn: "15/05/2026",
@@ -153,7 +153,7 @@ function MemberRow({
     ? "bg-orange-500 border-orange-500 text-white"
     : p.declined
     ? "bg-red-500 border-red-500 text-white"
-    : "border-gray-600 hover:border-orange-400";
+    : "border-gray-600 hover:border-white/40";
 
   const nameClass = p.confirmed && complete
     ? "text-green-300"
@@ -187,8 +187,8 @@ function MemberRow({
                 p.raceType
                   ? (p.hasBib || p.raceType === "supporto")
                     ? "bg-green-500/10 border-green-500/25 text-green-400 hover:border-green-400"
-                    : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
-                  : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
+                    : "bg-white/5 border-white/15 text-white/50 hover:border-white/30"
+                  : "bg-white/5 border-white/15 text-white/50 hover:border-white/30"
               }`}
             >
               {p.raceType
@@ -253,7 +253,7 @@ function GroupCard({
             className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
               transportChip.done
                 ? "bg-blue-500/10 border-blue-500/25 text-blue-300 hover:border-blue-400"
-                : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
+                : "bg-white/5 border-white/15 text-white/50 hover:border-white/30"
             }`}
           >
             {transportChip.text}
@@ -263,7 +263,7 @@ function GroupCard({
             className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
               hotelChip.done
                 ? "bg-purple-500/10 border-purple-500/25 text-purple-300 hover:border-purple-400"
-                : "bg-orange-500/10 border-orange-500/30 text-orange-300 hover:border-orange-400"
+                : "bg-white/5 border-white/15 text-white/50 hover:border-white/30"
             }`}
           >
             {hotelChip.text}
@@ -569,14 +569,14 @@ export default function EventPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <div className="text-orange-400 animate-pulse text-lg">Caricamento...</div>
+      <div className="text-white/30 animate-pulse text-sm tracking-widest uppercase">Caricamento...</div>
     </div>
   );
 
   if (!event) return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center text-white gap-4">
       <p className="text-2xl">Evento non trovato</p>
-      <Link href="/" className="text-orange-400 hover:underline">← Torna alla home</Link>
+      <Link href="/" className="text-white/40 hover:text-white transition-colors">← Torna alla home</Link>
     </div>
   );
 
@@ -600,20 +600,24 @@ export default function EventPage() {
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
-      <header className="border-b border-orange-500/30 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Link href="/" className="text-gray-400 hover:text-orange-400 transition-colors mr-1">←</Link>
-          <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-xs font-bold">O</div>
-          <span className="font-bold text-orange-400 tracking-wide">OLLSCARS</span>
+      <header className="border-b border-white/5 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-5 py-4 flex items-center justify-between">
+          <Link href="/" className="text-white/30 hover:text-white transition-colors text-sm tracking-wide">← indietro</Link>
+          <span className="text-white font-black tracking-[0.2em] text-sm uppercase">Marathon</span>
         </div>
       </header>
 
-      <div className={`h-48 bg-gradient-to-br ${meta.gradient} relative`}>
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-5xl mb-1">{meta.emoji}</span>
-          <h1 className="text-3xl font-bold">{event.name}</h1>
-          <p className="text-white/70 text-sm mt-1">{event.location} · {raceDate}</p>
+      <div className={`relative h-64 bg-gradient-to-br ${meta.gradient} overflow-hidden`}>
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+          <span className="text-[10rem] font-black text-white/[0.04] tracking-tighter whitespace-nowrap select-none leading-none">
+            {event.location.split(",")[0].toUpperCase()}
+          </span>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-end px-6 pb-7">
+          <p className="text-white/30 text-xs tracking-[0.25em] uppercase mb-2">Maratona</p>
+          <h1 className="text-4xl font-black tracking-tight leading-none">{event.location.split(",")[0]}</h1>
+          <p className="text-white/40 text-sm mt-2">{raceDate}</p>
         </div>
       </div>
 
@@ -641,25 +645,25 @@ export default function EventPage() {
         )}
 
         {/* Instructions */}
-        <div className="bg-gray-900 border border-orange-500/20 rounded-xl p-4 space-y-3">
-          <p className="text-white text-base">
-            <span className="text-orange-400">1.</span> <span className="text-orange-400">Conferma la tua presenza</span> — clicca il pallino accanto al tuo nome: <span className="text-orange-400">una volta</span> per confermare ✓, <span className="text-red-400">due volte</span> per segnare che non vieni ✕
+        <div className="bg-gray-900 border border-white/8 rounded-xl p-4 space-y-3">
+          <p className="text-white/80 text-base">
+            <span className="text-white/40">1.</span> <span className="text-white">Conferma la tua presenza</span> — clicca il pallino accanto al tuo nome: <span className="text-white/70">una volta</span> per confermare ✓, <span className="text-red-400/80">due volte</span> per segnare che non vieni ✕
           </p>
-          <p className="text-gray-400 text-sm pl-4 space-y-0.5">
+          <p className="text-white/40 text-sm pl-4 space-y-0.5">
             <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-green-500 shrink-0" /> <span>= confermato + tutte le info inserite</span></span>
             <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0" /> <span>= confermato ma mancano info viaggio</span></span>
             <span className="inline-flex items-center gap-1.5 mr-3"><span className="inline-block w-4 h-4 rounded-full border-2 border-gray-600 shrink-0" /> <span>= non ancora confermato</span></span>
             <span className="inline-flex items-center gap-1.5"><span className="inline-block w-4 h-4 rounded-full bg-red-500 shrink-0" /> <span>= non viene</span></span>
           </p>
-          <p className="text-white text-base">
-            <span className="text-orange-400">2.</span> <span className="text-orange-400">Inserisci i tuoi dettagli</span> — clicca i pulsanti colorati sotto il tuo nome per indicare a che gara ti sei iscritto, se hai già il pettorale, come ti sposti e dove dormi. Diventano <span className="text-green-400">verdi ✓</span> man mano che compili
+          <p className="text-white/80 text-base">
+            <span className="text-white/40">2.</span> <span className="text-white">Inserisci i tuoi dettagli</span> — clicca i pulsanti colorati sotto il tuo nome per indicare a che gara ti sei iscritto, se hai già il pettorale, come ti sposti e dove dormi. Diventano <span className="text-green-400">verdi ✓</span> man mano che compili
           </p>
-          <p className="text-white text-base">
-            <span className="text-orange-400">3.</span> <span className="text-orange-400">Non ti trovi in lista?</span> — clicca <span className="text-orange-400 font-bold">+ Aggiungi candidato</span> in fondo alla pagina
+          <p className="text-white/80 text-base">
+            <span className="text-white/40">3.</span> <span className="text-white">Non ti trovi in lista?</span> — clicca <span className="text-white font-semibold">+ Aggiungi candidato</span> in fondo alla pagina
           </p>
           {meta.deal && (
-            <p className="text-white text-base">
-              <span className="text-orange-400">4.</span> <span className="text-orange-400">Offerta volo</span> — verifica in fondo alla pagina la migliore offerta trovata da Diana 🙂
+            <p className="text-white/80 text-base">
+              <span className="text-white/40">4.</span> <span className="text-white">Offerta volo</span> — verifica in fondo alla pagina la migliore offerta trovata da Diana 🙂
             </p>
           )}
         </div>
@@ -669,7 +673,7 @@ export default function EventPage() {
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: "Candidati",   value: total,     color: "text-white",      bg: "bg-gray-900 border-white/10" },
-              { label: "Confermati",  value: confirmed, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
+              { label: "Confermati",  value: confirmed, color: "text-white",      bg: "bg-white/5 border-white/10" },
               { label: "Non vengono", value: declined,  color: "text-red-400",    bg: "bg-red-500/10 border-red-500/30" },
             ].map(s => (
               <div key={s.label} className={`border rounded-xl p-3 text-center ${s.bg}`}>
@@ -725,7 +729,7 @@ export default function EventPage() {
           </div>
           <button
             onClick={() => setModal({ open: true, participant: null })}
-            className="mt-6 w-full bg-orange-500 hover:bg-orange-400 text-white font-semibold px-4 py-3 rounded-xl transition-colors">
+            className="mt-6 w-full bg-white/8 hover:bg-white/12 text-white/60 hover:text-white font-semibold px-4 py-3 rounded-xl border border-white/10 hover:border-white/20 transition-all">
             + Aggiungi candidato
           </button>
         </div>
