@@ -46,10 +46,10 @@ export default async function Home() {
       </header>
 
       {/* Intro */}
-      <div className="max-w-5xl mx-auto px-5 pt-14 pb-8">
-        <p className="text-gray-600 text-xs tracking-[0.2em] uppercase mb-2">Le nostre trasferte</p>
-        <h1 className="text-5xl font-black tracking-tight leading-none">
-          Corriamo <span className="text-orange-400 italic">insieme.</span>
+      <div className="max-w-5xl mx-auto px-5 pt-14 pb-10">
+        <p className="text-gray-600 text-xs tracking-[0.2em] uppercase mb-3">Le nostre trasferte</p>
+        <h1 className="text-6xl md:text-7xl font-black tracking-tight leading-none">
+          Corriamo<br/><span className="text-orange-400 italic">insieme.</span>
         </h1>
       </div>
 
@@ -85,48 +85,38 @@ export default async function Home() {
                 {/* Content */}
                 <div className="relative h-full flex flex-col justify-between p-7">
 
-                  {/* Top row */}
+                  {/* Top row — numero evento + anno */}
                   <div className="flex items-start justify-between">
-                    <span className="text-4xl">{meta.emoji}</span>
-                    <span className="bg-white/10 backdrop-blur-md text-white/80 text-[11px] font-bold px-3 py-1.5 rounded-full border border-white/15 tracking-widest">
+                    <span className="text-xs font-bold tracking-[0.25em] text-white/30 uppercase">
+                      Maratona
+                    </span>
+                    <span className="text-xs font-bold tracking-[0.25em] text-white/30">
                       {new Date(event.raceDate).getFullYear()}
                     </span>
                   </div>
 
                   {/* Bottom section */}
-                  <div className="space-y-5">
+                  <div className="space-y-6">
 
-                    {/* City + landmarks */}
+                    {/* City + date */}
                     <div>
-                      <h2 className="text-5xl font-black tracking-tight leading-none">{event.location.split(",")[0]}</h2>
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {meta.landmarks.map(l => (
-                          <span key={l} className="text-[11px] text-white/50 bg-white/8 px-2.5 py-1 rounded-full border border-white/10">
-                            {l}
-                          </span>
-                        ))}
-                      </div>
+                      <h2 className="text-6xl font-black tracking-tight leading-none">{event.location.split(",")[0]}</h2>
+                      <p className="text-white/50 text-base mt-3 tracking-wide">{meta.raceDate}</p>
                     </div>
 
-                    {/* Date + countdown */}
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-white/40 text-xs tracking-wider uppercase mb-1">Data gara</p>
-                        <p className="text-white font-semibold">{meta.raceDate}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-orange-400 text-[11px] tracking-wider uppercase mb-0.5">Giorni al via</p>
-                        <p className="text-5xl font-black text-orange-400 leading-none">{daysLeft}</p>
-                      </div>
+                    {/* Countdown */}
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-7xl font-black text-orange-400 leading-none">{daysLeft}</span>
+                      <span className="text-white/40 text-sm tracking-wider uppercase leading-tight">giorni<br/>al via</span>
                     </div>
 
                     {/* Progress bar */}
                     <div>
-                      <div className="flex justify-between text-[11px] text-white/40 mb-2">
-                        <span>{confirmed} confermati su {total} candidati</span>
+                      <div className="flex justify-between text-sm text-white/40 mb-2">
+                        <span>{confirmed} confermati su {total}</span>
                         <span className="text-orange-400 font-semibold">{pct}%</span>
                       </div>
-                      <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-[2px] bg-white/10 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-orange-400 rounded-full"
                           style={{ width: `${pct}%` }}
